@@ -15,7 +15,7 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
-  useEffect(() => {
+  useEffect(() => { 
     if (session) {
       fetchLeaves();
     }
