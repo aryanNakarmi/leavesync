@@ -16,7 +16,7 @@ app.use("/api", routes);
 async function start() {
   await connectDB();
   
-  app.listen(PORT, () => {
+  app.listen(PORT, () => {  
     console.log(`✓ Backend running on http://localhost:${PORT}`);
   });
 }
