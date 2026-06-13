@@ -13,7 +13,7 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(""); 
 
     const result = await signIn("credentials", { email, password, redirect: false });
 
