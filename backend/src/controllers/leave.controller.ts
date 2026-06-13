@@ -6,7 +6,7 @@ import { getDB } from "../config/database";
 export async function createLeave(req: AuthRequest, res: Response) {
   const { leaveTypeId, startDate, endDate, reason } = req.body;
   const userId = req.user?.id;
-
+ 
   try {
     const start = new Date(startDate);
     const end = new Date(endDate);

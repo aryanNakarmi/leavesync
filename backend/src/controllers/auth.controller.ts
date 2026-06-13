@@ -5,7 +5,7 @@ import { getUserByEmail, getUserById, verifyPassword, createUser } from "../repo
 
 export async function login(req: AuthRequest, res: Response) {
   const { email, password } = req.body;
-
+ 
   try {
     const user = await getUserByEmail(email);
     
