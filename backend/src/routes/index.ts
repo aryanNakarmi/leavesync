@@ -9,7 +9,7 @@ const router = Router();
 router.post("/login", login);
 router.get("/profile", authMiddleware, getProfile);
 
-// Leave routes
+// Leave routes  
 router.post("/leaves", authMiddleware, createLeave);
 router.get("/leaves/my", authMiddleware, getMyLeaves);
 router.get("/leaves", authMiddleware, adminOnly, getAllLeaves);
