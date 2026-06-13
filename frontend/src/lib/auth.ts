@@ -9,7 +9,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { type: "email" },
         password: { type: "password" }
-      },
+      }, 
       async authorize(credentials) {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
           method: "POST",
