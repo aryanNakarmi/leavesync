@@ -15,7 +15,7 @@ export interface LeaveType {
   isPaid: boolean;
   annualQuota: number;
   accrualMethod: "ANNUAL" | "MONTHLY" | "QUARTERLY" | "EVENT_BASED";
-  maxCarryover: number;
+  maxCarryover: number; 
   status: "ACTIVE" | "INACTIVE";
 }
 
