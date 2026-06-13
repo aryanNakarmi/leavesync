@@ -11,7 +11,7 @@ export async function createUser(user: Omit<User, "_id" | "createdAt">) {
     ...user,
     password: hashedPassword,
     createdAt: new Date()
-  });
+  }); 
 
   return result.insertedId;
 }

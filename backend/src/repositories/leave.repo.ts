@@ -9,7 +9,7 @@ export async function createLeaveRequest(request: Omit<LeaveRequest, "_id" | "cr
     ...request,
     createdAt: new Date()
   });
-
+ 
   return result.insertedId;
 }
 
