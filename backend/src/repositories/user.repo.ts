@@ -7,7 +7,7 @@ export async function createUser(user: Omit<User, "_id" | "createdAt">) {
   const db = getDB();
   const hashedPassword = await bcrypt.hash(user.password, 10);
   
-  const result = await db.collection("users").insertOne({
+  const result = await db.collection("User").insertOne({
     ...user,
     password: hashedPassword,
     createdAt: new Date()
@@ -18,17 +18,17 @@ export async function createUser(user: Omit<User, "_id" | "createdAt">) {
 
 export async function getUserByEmail(email: string) {
   const db = getDB();
-  return db.collection("users").findOne({ email });
+  return db.collection("User").findOne({ email });
 }
 
 export async function getUserById(id: string) {
   const db = getDB();
-  return db.collection("users").findOne({ _id: new ObjectId(id) });
+  return db.collection("User").findOne({ _id: new ObjectId(id) });
 }
 
 export async function getAllUsers() {
   const db = getDB();
-  return db.collection("users").find({ role: "EMPLOYEE" }).toArray();
+  return db.collection("User").find({ role: "EMPLOYEE" }).toArray();
 }
 
 export async function verifyPassword(plainPassword: string, hashedPassword: string) {
