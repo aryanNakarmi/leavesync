@@ -31,7 +31,7 @@ function LoginForm() {
       setError("Invalid email or password. Please check and try again.");
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push("/");
     }
   }
 

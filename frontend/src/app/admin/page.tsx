@@ -4,36 +4,32 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
-export default function EmployeeDashboard() {
+export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [allLeaves, setAllLeaves] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
+    if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
   useEffect(() => {
-    if (session) {
-      fetchLeaves();
-    }
+    if (session) fetchData();
   }, [session]);
 
-  async function fetchLeaves() {
+  async function fetchData() {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves/my`, {
+      const leavesRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves`, {
         headers: { Authorization: `Bearer ${(session as any)?.token}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setRequests(Array.isArray(data) ? data : []);
+      if (leavesRes.ok) {
+        const data = await leavesRes.json();
+        setAllLeaves(Array.isArray(data) ? data : []);
       }
     } catch (err) {
       console.error(err);
-      setRequests([]);
+      setAllLeaves([]);
     }
     setLoading(false);
   }
@@ -49,8 +45,9 @@ export default function EmployeeDashboard() {
     );
   }
 
-  const pendingCount = requests.filter((r: any) => r.status === "PENDING").length;
-  const approvedCount = requests.filter((r: any) => r.status === "APPROVED").length;
+  const pendingCount = allLeaves.filter((r: any) => r.status === "PENDING").length;
+  const approvedCount = allLeaves.filter((r: any) => r.status === "APPROVED").length;
+  const rejectedCount = allLeaves.filter((r: any) => r.status === "REJECTED").length;
 
   const statusColors: Record<string, string> = {
     PENDING: "bg-amber-50 text-amber-700 border border-amber-200",
@@ -59,44 +56,24 @@ export default function EmployeeDashboard() {
   };
 
   const quickActions = [
-    {
-      title: "Apply for Leave",
-      desc: "Submit a new leave request",
-      icon: "add_circle",
-      href: "/employee/apply",
-      color: "bg-primary-fixed text-primary"
-    },
-    {
-      title: "My Requests",
-      desc: "View your leave history",
-      icon: "pending_actions",
-      href: "/employee/status",
-      color: "bg-secondary-fixed text-secondary"
-    },
-    {
-      title: "Calendar",
-      desc: "View your schedule",
-      icon: "calendar_month",
-      href: "/employee/calendar",
-      color: "bg-primary-fixed text-primary"
-    }
+    { title: "Leave Requests", desc: "Review and manage requests", icon: "assignment", href: "/admin/leave-requests", color: "bg-primary-fixed text-primary" },
+    { title: "Employees", desc: "Manage your team", icon: "group", href: "/admin/employees", color: "bg-secondary-fixed text-secondary" },
+    { title: "Reports", desc: "View analytics and data", icon: "bar_chart", href: "/admin/reports", color: "bg-primary-fixed text-primary" },
   ];
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-on-surface">
-          Welcome back, {session?.user?.name?.split(" ")[0]} 👋
-        </h1>
+        <h1 className="text-2xl font-bold text-on-surface">Admin Dashboard</h1>
         <p className="text-on-surface-variant mt-1">{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Total Requests</p>
-              <p className="text-3xl font-bold text-on-surface mt-1">{requests.length}</p>
+              <p className="text-3xl font-bold text-on-surface mt-1">{allLeaves.length}</p>
             </div>
             <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center">
               <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>assignment</span>
@@ -125,15 +102,23 @@ export default function EmployeeDashboard() {
             </div>
           </div>
         </div>
+        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-on-surface-variant font-medium">Rejected</p>
+              <p className="text-3xl font-bold text-red-600 mt-1">{rejectedCount}</p>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
+              <span className="material-symbols-outlined text-red-600 text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>cancel</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {quickActions.map((action) => (
-          <button
-            key={action.href}
-            onClick={() => router.push(action.href)}
-            className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm hover:shadow-md hover:border-primary-fixed-dim transition-all text-left active:scale-[0.98]"
-          >
+          <button key={action.href} onClick={() => router.push(action.href)}
+            className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm hover:shadow-md hover:border-primary-fixed-dim transition-all text-left active:scale-[0.98]">
             <div className={`w-10 h-10 rounded-full ${action.color} flex items-center justify-center mb-3`}>
               <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>{action.icon}</span>
             </div>
@@ -145,35 +130,35 @@ export default function EmployeeDashboard() {
 
       <div className="bg-white rounded-xl border border-outline-variant shadow-sm">
         <div className="px-6 py-4 border-b border-outline-variant">
-          <h2 className="text-lg font-semibold text-on-surface">Recent Leave Requests</h2>
+          <h2 className="text-lg font-semibold text-on-surface">All Leave Requests</h2>
         </div>
         {loading ? (
           <div className="p-8 text-center text-on-surface-variant">Loading...</div>
-        ) : requests.length === 0 ? (
+        ) : allLeaves.length === 0 ? (
           <div className="p-8 text-center">
             <span className="material-symbols-outlined text-4xl text-outline mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
             <p className="text-on-surface-variant">No leave requests yet</p>
-            <button onClick={() => router.push("/employee/apply")} className="mt-3 text-sm text-primary font-medium hover:underline">
-              Apply for your first leave
-            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-surface-container-low border-b border-outline-variant">
                 <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">User</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Dates</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Days</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant">
-                {requests.slice(0, 5).map((leave: any) => (
+                {allLeaves.slice(0, 5).map((leave: any) => (
                   <tr key={leave._id} className="hover:bg-surface-container-low transition-colors">
+                    <td className="px-6 py-4 text-sm text-on-surface font-medium">{leave.userId?.slice(-6) || "N/A"}</td>
                     <td className="px-6 py-4 text-sm text-on-surface">
-                      {format(new Date(leave.startDate), "MMM d")} - {format(new Date(leave.endDate), "MMM d, yyyy")}
+                      {leave.startDate ? format(new Date(leave.startDate), "MMM d") : "..."} -{" "}
+                      {leave.endDate ? format(new Date(leave.endDate), "MMM d, yyyy") : "..."}
                     </td>
-                    <td className="px-6 py-4 text-sm text-on-surface-variant">{leave.totalDays}</td>
+                    <td className="px-6 py-4 text-sm text-on-surface-variant">{leave.totalDays || "—"}</td>
                     <td className="px-6 py-4 text-sm">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[leave.status] || "bg-gray-100 text-gray-800"}`}>
                         {leave.status}
