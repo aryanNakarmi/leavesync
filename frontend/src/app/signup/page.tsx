@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -12,13 +11,13 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    // Client-side validation
     if (!name.trim()) {
       setError("Name is required");
       setLoading(false);
@@ -58,40 +57,56 @@ export default function SignupPage() {
         return;
       }
 
-      // Auto sign-in after successful registration
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false
-      });
-
-      if (result?.error) {
-        router.push("/login");
-      } else {
-        router.push("/dashboard");
-      }
+      // Show success and redirect to login
+      setSuccess(true);
+      setTimeout(() => {
+        router.push("/login?registered=true");
+      }, 1500);
     } catch {
       setError("Unable to connect. Please try again.");
       setLoading(false);
     }
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center mx-auto mb-4">
+              <span className="material-symbols-outlined text-primary text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                check_circle
+              </span>
+            </div>
+            <h2 className="text-2xl font-bold text-on-surface mb-2">Account created!</h2>
+            <p className="text-on-surface-variant">Redirecting you to sign in...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-8">
           {/* Header */}
           <div className="mb-8 text-center">
-            <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold text-gray-900">LeaveSync</h1>
+            <Link href="/" className="inline-flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  calendar_month
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold text-primary">LeaveSync</h1>
             </Link>
-            <p className="text-gray-500 text-sm mt-1">Create your account</p>
+            <p className="text-on-surface-variant text-sm">Create your account</p>
           </div>
 
           <form onSubmit={handleSignup} className="space-y-4">
             {/* Name */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="name" className="block text-sm font-medium text-on-surface mb-1.5">
                 Full Name
               </label>
               <input
@@ -102,13 +117,13 @@ export default function SignupPage() {
                 placeholder="John Doe"
                 required
                 autoComplete="name"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50"
               />
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-on-surface mb-1.5">
                 Email Address
               </label>
               <input
@@ -119,13 +134,13 @@ export default function SignupPage() {
                 placeholder="you@company.com"
                 required
                 autoComplete="email"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-on-surface mb-1.5">
                 Password
               </label>
               <input
@@ -137,13 +152,13 @@ export default function SignupPage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50"
               />
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-on-surface mb-1.5">
                 Confirm Password
               </label>
               <input
@@ -154,14 +169,14 @@ export default function SignupPage() {
                 placeholder="Repeat your password"
                 required
                 autoComplete="new-password"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50"
               />
             </div>
 
             {/* Error */}
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="p-3 bg-error-container border border-error/20 rounded-lg">
+                <p className="text-sm text-on-error-container">{error}</p>
               </div>
             )}
 
@@ -169,7 +184,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full bg-primary text-on-primary py-2.5 rounded-lg font-medium hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
             >
               {loading ? "Creating account..." : "Create account"}
             </button>
@@ -177,15 +192,15 @@ export default function SignupPage() {
 
           {/* Divider */}
           <div className="mt-6 mb-4 flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-sm text-gray-400">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-outline-variant" />
+            <span className="text-sm text-on-surface-variant">or</span>
+            <div className="flex-1 h-px bg-outline-variant" />
           </div>
 
           {/* Link to login */}
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-on-surface-variant">
             Already have an account?{" "}
-            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+            <Link href="/login" className="text-primary hover:text-primary-container font-medium hover:underline">
               Sign in
             </Link>
           </p>

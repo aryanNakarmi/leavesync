@@ -1,15 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("registered") === "true") {
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 5000);
+    }
+  }, [searchParams]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -27,20 +36,35 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-8">
           {/* Branding */}
           <div className="mb-8 text-center">
-            <Link href="/" className="inline-block">
-              <h1 className="text-3xl font-bold text-gray-900">LeaveSync</h1>
+            <Link href="/" className="inline-flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  calendar_month
+                </span>
+              </div>
+              <h1 className="text-2xl font-bold text-primary">LeaveSync</h1>
             </Link>
-            <p className="text-gray-500 text-sm mt-1">Leave Management System</p>
+            <p className="text-on-surface-variant text-sm">Leave Management System</p>
           </div>
+
+          {/* Success banner */}
+          {showSuccess && (
+            <div className="mb-4 p-3 bg-primary-fixed border border-primary-fixed-dim/50 rounded-lg flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                check_circle
+              </span>
+              <p className="text-sm text-on-primary-fixed">Account created successfully! Please sign in.</p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-on-surface mb-1.5">
                 Email Address
               </label>
               <input
@@ -51,12 +75,12 @@ export default function LoginPage() {
                 placeholder="you@company.com"
                 required
                 autoComplete="email"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-on-surface mb-1.5">
                 Password
               </label>
               <input
@@ -67,20 +91,20 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50"
               />
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{error}</p>
+              <div className="p-3 bg-error-container border border-error/20 rounded-lg">
+                <p className="text-sm text-on-error-container">{error}</p>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full bg-primary text-on-primary py-2.5 rounded-lg font-medium hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
             >
               {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -88,27 +112,41 @@ export default function LoginPage() {
 
           {/* Divider */}
           <div className="mt-6 mb-4 flex items-center gap-3">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-sm text-gray-400">or</span>
-            <div className="flex-1 h-px bg-gray-200" />
+            <div className="flex-1 h-px bg-outline-variant" />
+            <span className="text-sm text-on-surface-variant">or</span>
+            <div className="flex-1 h-px bg-outline-variant" />
           </div>
 
           {/* Link to signup */}
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-on-surface-variant">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium hover:underline">
+            <Link href="/signup" className="text-primary hover:text-primary-container font-medium hover:underline">
               Create one
             </Link>
           </p>
 
           {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-xs font-medium text-blue-900 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-blue-800">Admin: admin@leavesync.com</p>
-            <p className="text-xs text-blue-800">Password: password123</p>
+          <div className="mt-6 p-4 bg-primary-fixed/50 rounded-lg border border-primary-fixed-dim/50">
+            <p className="text-xs font-medium text-on-primary-fixed mb-2">Demo Credentials:</p>
+            <p className="text-xs text-on-primary-fixed-variant">Admin: admin@leavesync.com</p>
+            <p className="text-xs text-on-primary-fixed-variant">User: alice@leavesync.com</p>
+            <p className="text-xs text-on-primary-fixed-variant">Password: password123</p>
           </div>
+        </div>        </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
-    </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
