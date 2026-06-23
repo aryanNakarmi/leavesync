@@ -23,11 +23,7 @@ export default function Sidebar({ navItems, role, userName, userInitials }: Side
     <aside className="fixed left-0 top-0 h-screen w-64 bg-surface border-r border-outline-variant flex flex-col py-6 px-4 z-50">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8 px-2">
-        <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
-          <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-            calendar_month
-          </span>
-        </div>
+        <img src="/logo.png" alt="LeaveSync" className="h-9 w-auto" />
         <div>
           <h1 className="text-lg font-bold text-primary leading-tight">LeaveSync</h1>
           <p className="text-[10px] text-on-surface-variant">{role} Portal</p>

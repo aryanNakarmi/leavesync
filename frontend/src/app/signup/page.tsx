@@ -93,11 +93,7 @@ export default function SignupPage() {
           {/* Header */}
           <div className="mb-8 text-center">
             <Link href="/" className="inline-flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  calendar_month
-                </span>
-              </div>
+              <img src="/logo.png" alt="LeaveSync" className="h-9 w-auto" />
               <h1 className="text-2xl font-bold text-primary">LeaveSync</h1>
             </Link>
             <p className="text-on-surface-variant text-sm">Create your account</p>

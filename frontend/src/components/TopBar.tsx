@@ -20,8 +20,6 @@ export default function TopBar() {
           <span className="material-symbols-outlined text-lg">notifications</span>
           <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-error rounded-full" />
         </button>
-        <div className="h-6 w-px bg-outline-variant" />
-        <span className="text-sm font-semibold text-primary">LeaveSync</span>
       </div>
     </header>
   );
