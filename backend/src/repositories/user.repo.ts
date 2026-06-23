@@ -3,7 +3,7 @@ import { getDB } from "../config/database";
 import { User } from "../types";
 import bcrypt from "bcryptjs";
 
-export async function createUser(user: Omit<User, "_id" | "createdAt">) {
+export async function createUser(user : Omit<User, "_id" | "createdAt">) {
   const db = getDB();
   const hashedPassword = await bcrypt.hash(user.password, 10);
   
