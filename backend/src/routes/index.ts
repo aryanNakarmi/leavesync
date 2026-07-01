@@ -10,13 +10,6 @@ import {
   updateLeaveTypeHandler,
   deleteLeaveTypeHandler
 } from "../controllers/leaveType.controller";
-import {
-  listDepartments,
-  createDepartmentHandler,
-  updateDepartmentHandler,
-  deleteDepartmentHandler
-} from "../controllers/department.controller";
-
 const router = Router();
 
 // Auth routes
@@ -38,12 +31,6 @@ router.post("/leave-types", authMiddleware, adminOnly, createLeaveTypeHandler);
 router.patch("/leave-types/:id", authMiddleware, adminOnly, updateLeaveTypeHandler);
 router.delete("/leave-types/:id", authMiddleware, adminOnly, deleteLeaveTypeHandler);
 router.get("/leave-balance", authMiddleware, getMyLeaveBalance);
-
-// Departments
-router.get("/departments", authMiddleware, adminOnly, listDepartments);
-router.post("/departments", authMiddleware, adminOnly, createDepartmentHandler);
-router.patch("/departments/:id", authMiddleware, adminOnly, updateDepartmentHandler);
-router.delete("/departments/:id", authMiddleware, adminOnly, deleteDepartmentHandler);
 
 // User management (admin only)
 router.get("/users", authMiddleware, adminOnly, getAllEmployees);

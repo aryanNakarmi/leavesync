@@ -53,7 +53,7 @@ export default function ApplyLeavePage() {
   async function fetchData() {
     try {
       const [typesRes, balanceRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-types`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-types/active`, {
           headers: { Authorization: `Bearer ${(session as any)?.token}` }
         }),
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-balance`, {

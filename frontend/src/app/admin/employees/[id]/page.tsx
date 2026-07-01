@@ -65,7 +65,6 @@ const DEPARTMENTS = [
 ];
 
 const EMPLOYMENT_TYPES = ["Full-Time", "Part-Time", "Contract", "Intern"];
-
 const GENDERS = ["Male", "Female", "Other", "Prefer not to say"];
 
 export default function EmployeeDetailPage() {
@@ -77,12 +76,11 @@ export default function EmployeeDetailPage() {
   const [data, setData] = useState<EmployeeDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savingBalances, setSavingBalances] = useState(false);
   const [editing, setEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Editable form state
+  // Unified edit form state (includes profile fields + password + leave balances)
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -93,10 +91,10 @@ export default function EmployeeDetailPage() {
     dateOfBirth: "",
     gender: "",
     employmentType: "",
-    joinDate: ""
+    joinDate: "",
+    password: ""
   });
 
-  // Leave balance form state
   const [balanceForm, setBalanceForm] = useState<{ leaveTypeId: string; allocated: number }[]>([]);
 
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>(
@@ -131,7 +129,8 @@ export default function EmployeeDetailPage() {
           dateOfBirth: emp.dateOfBirth || "",
           gender: emp.gender || "",
           employmentType: emp.employmentType || "Full-Time",
-          joinDate: emp.joinDate || ""
+          joinDate: emp.joinDate || "",
+          password: ""
         });
         setBalanceForm(
           result.leaveTypes.map(lt => {
@@ -160,7 +159,6 @@ export default function EmployeeDetailPage() {
   function handleProfileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       const dataUrl = event.target?.result as string;
@@ -182,22 +180,44 @@ export default function EmployeeDetailPage() {
       dateOfBirth: emp.dateOfBirth || "",
       gender: emp.gender || "",
       employmentType: emp.employmentType || "Full-Time",
-      joinDate: emp.joinDate || ""
+      joinDate: emp.joinDate || "",
+      password: ""
     });
+    setBalanceForm(
+      data.leaveTypes.map(lt => {
+        const existing = data.leaveBalances.find(b => b.leaveTypeId === lt._id);
+        return { leaveTypeId: lt._id, allocated: existing?.allocated ?? lt.annualQuota ?? 0 };
+      })
+    );
   }
 
-  async function handleSaveProfile(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
 
     try {
+      // 1. Save profile fields (excluding password if blank)
+      const profileBody: any = {
+        name: form.name,
+        phone: form.phone,
+        address: form.address,
+        profilePicture: form.profilePicture,
+        department: form.department,
+        jobTitle: form.jobTitle,
+        dateOfBirth: form.dateOfBirth,
+        gender: form.gender,
+        employmentType: form.employmentType,
+        joinDate: form.joinDate
+      };
+      if (form.password) profileBody.password = form.password;
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${(session as any)?.token}`
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(profileBody)
       });
 
       if (!res.ok) {
@@ -207,20 +227,8 @@ export default function EmployeeDetailPage() {
         return;
       }
 
-      showToast("success", "Employee profile updated successfully");
-      setEditing(false);
-      await fetchEmployeeDetail();
-    } catch {
-      showToast("error", "Failed to connect. Please try again.");
-    }
-    setSaving(false);
-  }
-
-  async function handleSaveLeaveBalances() {
-    setSavingBalances(true);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}/leave-balances`, {
+      // 2. Save leave balances
+      const balanceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}/leave-balances`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -229,19 +237,19 @@ export default function EmployeeDetailPage() {
         body: JSON.stringify({ leaveBalances: balanceForm })
       });
 
-      if (!res.ok) {
-        const errData = await res.json();
-        showToast("error", errData.error || "Failed to update leave balances");
-        setSavingBalances(false);
+      if (!balanceRes.ok) {
+        showToast("error", "Profile saved but failed to update leave balances");
+        setSaving(false);
         return;
       }
 
-      showToast("success", "Leave balances updated successfully");
+      showToast("success", "Employee updated successfully");
+      setEditing(false);
       await fetchEmployeeDetail();
     } catch {
       showToast("error", "Failed to connect. Please try again.");
     }
-    setSavingBalances(false);
+    setSaving(false);
   }
 
   async function handleDeleteEmployee() {
@@ -251,7 +259,6 @@ export default function EmployeeDetailPage() {
         method: "DELETE",
         headers: { Authorization: `Bearer ${(session as any)?.token}` }
       });
-
       if (res.ok) {
         showToast("success", "Employee deleted successfully");
         setTimeout(() => router.push("/admin/employees"), 800);
@@ -284,9 +291,7 @@ export default function EmployeeDetailPage() {
         <h2 className="text-lg font-semibold text-on-surface mb-1">Employee not found</h2>
         <p className="text-sm text-on-surface-variant mb-4">This employee may have been removed or doesn&apos;t exist.</p>
         <button onClick={() => router.push("/admin/employees")}
-          className="text-sm text-primary font-medium hover:underline">
-          Back to Employees
-        </button>
+          className="text-sm text-primary font-medium hover:underline">Back to Employees</button>
       </div>
     );
   }
@@ -307,9 +312,7 @@ export default function EmployeeDetailPage() {
       {/* Toast */}
       {toast.show && (
         <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 border ${
-          toast.type === "success"
-            ? "bg-green-50 border-green-200"
-            : "bg-error-container border-error/20"
+          toast.type === "success" ? "bg-green-50 border-green-200" : "bg-error-container border-error/20"
         }`}>
           <span className={`material-symbols-outlined text-xl shrink-0 ${toast.type === "success" ? "text-green-600" : "text-error"}`}
             style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -338,18 +341,19 @@ export default function EmployeeDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Personal Information */}
-        <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-            <h2 className="text-lg font-semibold text-on-surface">Personal Information</h2>
-          </div>
+      {/* ===== EDIT MODE: Unified form ===== */}
+      {editing ? (
+        <form onSubmit={handleSave}>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Personal Information */}
+            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                <h2 className="text-lg font-semibold text-on-surface">Personal Information</h2>
+              </div>
 
-          {editing ? (
-            <form onSubmit={handleSaveProfile}>
               <div className="space-y-4">
-                {/* Profile Picture - File Upload */}
+                {/* Profile Picture */}
                 <div className="flex items-center gap-4">
                   {form.profilePicture ? (
                     <img src={form.profilePicture} alt="Profile" className="w-20 h-20 rounded-xl object-cover border border-outline-variant" />
@@ -359,29 +363,15 @@ export default function EmployeeDetailPage() {
                     </div>
                   )}
                   <div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleProfileUpload}
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2"
-                    >
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handleProfileUpload} className="hidden" />
+                    <button type="button" onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2">
                       <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload</span>
                       Upload photo
                     </button>
                     {form.profilePicture && (
-                      <button
-                        type="button"
-                        onClick={() => setForm(f => ({ ...f, profilePicture: "" }))}
-                        className="ml-2 text-xs text-error hover:underline"
-                      >
-                        Remove
-                      </button>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, profilePicture: "" }))}
+                        className="ml-2 text-xs text-error hover:underline">Remove</button>
                     )}
                   </div>
                 </div>
@@ -430,271 +420,242 @@ export default function EmployeeDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-2">
-                  <button type="button" onClick={() => { setEditing(false); resetForm(); }}
-                    className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">
-                    Cancel
-                  </button>
-                  <button type="submit" disabled={saving || !form.name}
-                    className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2">
-                    {saving ? (
-                      <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
-                    ) : (
-                      <><span className="material-symbols-outlined text-sm">save</span> Save Changes</>
-                    )}
-                  </button>
+                {/* Password (inside edit, with leave blank to keep current) */}
+                <div className="border-t border-outline-variant/30 pt-4">
+                  <label className="block text-xs font-medium text-on-surface-variant mb-1 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>
+                    New Password
+                    <span className="font-normal text-on-surface-variant">(leave blank to keep current)</span>
+                  </label>
+                  <input type="password" value={form.password}
+                    onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder="Leave blank to keep current"
+                    minLength={6}
+                    className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
                 </div>
               </div>
-            </form>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 mb-4">
-                {employee.profilePicture ? (
-                  <img src={employee.profilePicture} alt={employee.name} className="w-20 h-20 rounded-xl object-cover border border-outline-variant" />
-                ) : (
-                  <div className="w-20 h-20 rounded-xl bg-primary-fixed flex items-center justify-center text-primary text-2xl font-bold">
-                    {initials}
+            </section>
+
+            {/* Job Information */}
+            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>work</span>
+                <h2 className="text-lg font-semibold text-on-surface">Job Information</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-on-surface-variant mb-1">Department</label>
+                    <select value={form.department}
+                      onChange={(e) => setForm(f => ({ ...f, department: e.target.value }))}
+                      className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                      <option value="">Select department</option>
+                      {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
                   </div>
-                )}
-                <div>
-                  <p className="text-lg font-semibold text-on-surface">{employee.name}</p>
-                  <p className="text-sm text-on-surface-variant">{employee.jobTitle || "No title set"}</p>
+                  <div>
+                    <label className="block text-xs font-medium text-on-surface-variant mb-1">Job Title</label>
+                    <input type="text" value={form.jobTitle}
+                      onChange={(e) => setForm(f => ({ ...f, jobTitle: e.target.value }))}
+                      placeholder="Senior Software Engineer"
+                      className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-on-surface-variant mb-1">Employment Type</label>
+                    <select value={form.employmentType}
+                      onChange={(e) => setForm(f => ({ ...f, employmentType: e.target.value }))}
+                      className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
+                      {EMPLOYMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-on-surface-variant mb-1">Join Date</label>
+                    <input type="date" value={form.joinDate}
+                      onChange={(e) => setForm(f => ({ ...f, joinDate: e.target.value }))}
+                      className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-xs text-on-surface-variant">Email</p>
-                  <p className="text-on-surface">{employee.email}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-on-surface-variant">Phone</p>
-                  <p className="text-on-surface">{employee.phone || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-on-surface-variant">Date of Birth</p>
-                  <p className="text-on-surface">{employee.dateOfBirth ? format(new Date(employee.dateOfBirth), "MMM d, yyyy") : "—"}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-on-surface-variant">Gender</p>
-                  <p className="text-on-surface">{employee.gender || "—"}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-xs text-on-surface-variant">Address</p>
-                  <p className="text-on-surface">{employee.address || "—"}</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
+            </section>
 
-        {/* Job Information */}
-        <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>work</span>
-            <h2 className="text-lg font-semibold text-on-surface">Job Information</h2>
-            {editing && <span className="ml-auto text-xs text-primary bg-primary-fixed px-2 py-0.5 rounded-full">Editable</span>}
-          </div>
+            {/* Leave Balances (inside edit) */}
+            <section className="lg:col-span-2 bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>event_available</span>
+                <h2 className="text-lg font-semibold text-on-surface">Leave Settings</h2>
+              </div>
 
-          {editing ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-on-surface-variant mb-1">Department</label>
-                  <select value={form.department}
-                    onChange={(e) => setForm(f => ({ ...f, department: e.target.value }))}
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
-                    <option value="">Select department</option>
-                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-on-surface-variant mb-1">Job Title</label>
-                  <input type="text" value={form.jobTitle}
-                    onChange={(e) => setForm(f => ({ ...f, jobTitle: e.target.value }))}
-                    placeholder="Senior Software Engineer"
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-on-surface-variant mb-1">Employment Type</label>
-                  <select value={form.employmentType}
-                    onChange={(e) => setForm(f => ({ ...f, employmentType: e.target.value }))}
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none">
-                    {EMPLOYMENT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-on-surface-variant mb-1">Join Date</label>
-                  <input type="date" value={form.joinDate}
-                    onChange={(e) => setForm(f => ({ ...f, joinDate: e.target.value }))}
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-xs text-on-surface-variant">Department</p>
-                <p className="text-on-surface">{employee.department || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant">Job Title</p>
-                <p className="text-on-surface">{employee.jobTitle || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant">Employment Type</p>
-                <p className="text-on-surface capitalize">{employee.employmentType || "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant">Join Date</p>
-                <p className="text-on-surface">{employee.joinDate ? format(new Date(employee.joinDate), "MMM d, yyyy") : "—"}</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant">Employee ID</p>
-                <p className="text-on-surface font-mono text-xs">{employee._id.slice(-8).toUpperCase()}</p>
-              </div>
-              <div>
-                <p className="text-xs text-on-surface-variant">Member Since</p>
-                <p className="text-on-surface">{employee.createdAt ? format(new Date(employee.createdAt), "MMM d, yyyy") : "—"}</p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Leave Settings */}
-        <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>event_available</span>
-            <h2 className="text-lg font-semibold text-on-surface">Leave Settings</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-            {leaveTypes.map((lt) => {
-              const bf = balanceForm.find(b => b.leaveTypeId === lt._id);
-              const usage = usedAllocatedMap.get(lt._id);
-              return (
-                <div key={lt._id} className="bg-surface-container-low rounded-lg border border-outline-variant p-3">
-                  <label className="block text-xs font-medium text-on-surface-variant mb-1">{lt.name}</label>
-                  <div className="flex items-center gap-2 mb-2">
-                    <input
-                      type="number"
-                      min={0}
-                      value={bf?.allocated ?? 0}
-                      onChange={(e) => setBalanceForm(prev =>
-                        prev.map(b => b.leaveTypeId === lt._id ? { ...b, allocated: parseInt(e.target.value) || 0 } : b)
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {leaveTypes.map((lt) => {
+                  const bf = balanceForm.find(b => b.leaveTypeId === lt._id);
+                  const usage = usedAllocatedMap.get(lt._id);
+                  return (
+                    <div key={lt._id} className="bg-surface-container-low rounded-lg border border-outline-variant p-4">
+                      <label className="block text-xs font-medium text-on-surface-variant mb-1.5">{lt.name}</label>
+                      <div className="flex items-center gap-2 mb-2">
+                        <input type="number" min={0}
+                          value={bf?.allocated ?? 0}
+                          onChange={(e) => setBalanceForm(prev =>
+                            prev.map(b => b.leaveTypeId === lt._id ? { ...b, allocated: parseInt(e.target.value) || 0 } : b)
+                          )}
+                          className="w-full px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-medium text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                        <span className="text-xs text-on-surface-variant">days</span>
+                      </div>
+                      {usage && (
+                        <div className="flex items-center justify-between text-[10px] text-on-surface-variant">
+                          <span>Used: {usage.used}</span>
+                          <span>Remaining: {(bf?.allocated ?? 0) + (usage.carriedOver || 0) - usage.used}</span>
+                        </div>
                       )}
-                      className="w-full px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-medium text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                    />
-                    <span className="text-xs text-on-surface-variant">days</span>
-                  </div>
-                  {usage && (
-                    <div className="flex items-center justify-between text-[10px] text-on-surface-variant">
-                      <span>Used: {usage.used}</span>
-                      <span>Remaining: {(bf?.allocated ?? 0) + (usage.carriedOver || 0) - usage.used}</span>
                     </div>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          {/* Save / Cancel buttons */}
+          <div className="flex items-center justify-end gap-3 mt-6 pb-8">
+            <button type="button" onClick={() => { setEditing(false); resetForm(); }}
+              className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">
+              Cancel
+            </button>
+            <button type="submit" disabled={saving || !form.name}
+              className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2">
+              {saving ? (
+                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+              ) : (
+                <><span className="material-symbols-outlined text-sm">save</span> Save All Changes</>
+              )}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          {/* ===== VIEW MODE: Two-column layout ===== */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Personal Information (read-only) */}
+            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                <h2 className="text-lg font-semibold text-on-surface">Personal Information</h2>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 mb-4">
+                  {employee.profilePicture ? (
+                    <img src={employee.profilePicture} alt={employee.name} className="w-20 h-20 rounded-xl object-cover border border-outline-variant" />
+                  ) : (
+                    <div className="w-20 h-20 rounded-xl bg-primary-fixed flex items-center justify-center text-primary text-2xl font-bold">{initials}</div>
                   )}
+                  <div>
+                    <p className="text-lg font-semibold text-on-surface">{employee.name}</p>
+                    <p className="text-sm text-on-surface-variant">{employee.jobTitle || "No title set"}</p>
+                  </div>
                 </div>
-              );
-            })}
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><p className="text-xs text-on-surface-variant">Email</p><p className="text-on-surface">{employee.email}</p></div>
+                  <div><p className="text-xs text-on-surface-variant">Phone</p><p className="text-on-surface">{employee.phone || "—"}</p></div>
+                  <div><p className="text-xs text-on-surface-variant">Date of Birth</p><p className="text-on-surface">{employee.dateOfBirth ? format(new Date(employee.dateOfBirth), "MMM d, yyyy") : "—"}</p></div>
+                  <div><p className="text-xs text-on-surface-variant">Gender</p><p className="text-on-surface">{employee.gender || "—"}</p></div>
+                  <div className="col-span-2"><p className="text-xs text-on-surface-variant">Address</p><p className="text-on-surface">{employee.address || "—"}</p></div>
+                </div>
+              </div>
+            </section>
+
+            {/* Job Information (read-only) */}
+            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>work</span>
+                <h2 className="text-lg font-semibold text-on-surface">Job Information</h2>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><p className="text-xs text-on-surface-variant">Department</p><p className="text-on-surface">{employee.department || "—"}</p></div>
+                <div><p className="text-xs text-on-surface-variant">Job Title</p><p className="text-on-surface">{employee.jobTitle || "—"}</p></div>
+                <div><p className="text-xs text-on-surface-variant">Employment Type</p><p className="text-on-surface capitalize">{employee.employmentType || "—"}</p></div>
+                <div><p className="text-xs text-on-surface-variant">Join Date</p><p className="text-on-surface">{employee.joinDate ? format(new Date(employee.joinDate), "MMM d, yyyy") : "—"}</p></div>
+                <div><p className="text-xs text-on-surface-variant">Employee ID</p><p className="text-on-surface font-mono text-xs">{employee._id.slice(-8).toUpperCase()}</p></div>
+                <div><p className="text-xs text-on-surface-variant">Member Since</p><p className="text-on-surface">{employee.createdAt ? format(new Date(employee.createdAt), "MMM d, yyyy") : "—"}</p></div>
+              </div>
+            </section>
+
+            {/* Account Actions - only Delete */}
+            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-5">
+                <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>lock_person</span>
+                <h2 className="text-lg font-semibold text-on-surface">Account Actions</h2>
+              </div>
+
+              <div className="border border-error/30 rounded-lg p-4">
+                <p className="text-xs text-on-surface-variant mb-3 uppercase tracking-wider font-medium">Danger Zone</p>
+                <button onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full flex items-center justify-center gap-2 border border-error/30 text-error bg-error/5 hover:bg-error/10 rounded-lg p-3 text-sm font-medium transition-all">
+                  <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>delete_forever</span>
+                  Delete Employee Permanently
+                </button>
+                <p className="text-[10px] text-on-surface-variant mt-2 text-center">
+                  This will permanently remove the employee and all their data from the system. This action cannot be undone.
+                </p>
+              </div>
+            </section>
           </div>
 
-          <button onClick={handleSaveLeaveBalances} disabled={savingBalances}
-            className="w-full px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-            {savingBalances ? (
-              <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+          {/* Leave History (view mode only) */}
+          <section className="mt-6 bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
+                <h2 className="text-lg font-semibold text-on-surface">Leave History</h2>
+              </div>
+              <span className="text-xs text-on-surface-variant">{leaveRequests.length} record{leaveRequests.length !== 1 ? "s" : ""}</span>
+            </div>
+
+            {leaveRequests.length === 0 ? (
+              <div className="p-12 text-center">
+                <span className="material-symbols-outlined text-4xl text-outline mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
+                <p className="text-sm text-on-surface-variant">No leave requests yet</p>
+              </div>
             ) : (
-              <><span className="material-symbols-outlined text-sm">save</span> Save Leave Balances</>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-surface-container-low border-b border-outline-variant">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Dates</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-on-surface-variant uppercase tracking-wider">Days</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Reason</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-on-surface-variant uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider">Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-outline-variant">
+                    {leaveRequests.map((lr) => (
+                      <tr key={lr._id} className="hover:bg-surface-container-low transition-colors">
+                        <td className="px-6 py-4 text-sm text-on-surface">{lr.leaveTypeName}</td>
+                        <td className="px-6 py-4 text-sm text-on-surface">
+                          {format(new Date(lr.startDate), "MMM d")} - {format(new Date(lr.endDate), "MMM d, yyyy")}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-center font-medium">{lr.totalDays}</td>
+                        <td className="px-6 py-4 text-sm text-on-surface-variant max-w-[200px] truncate">{lr.reason}</td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${statusColors[lr.status] || "bg-gray-100 text-gray-800"}`}>
+                            {lr.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-on-surface-variant text-right">
+                          {format(new Date(lr.createdAt), "MMM d, yyyy")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </button>
-        </section>
-
-        {/* Account Settings - now just a Delete section */}
-        <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
-          <div className="flex items-center gap-2 mb-5">
-            <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>lock_person</span>
-            <h2 className="text-lg font-semibold text-on-surface">Account Actions</h2>
-          </div>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <button className="flex items-center justify-center gap-2 border border-outline-variant bg-white p-3 rounded-lg hover:bg-surface-container-low transition-all text-on-surface text-sm font-medium">
-                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>
-                Reset Password
-              </button>
-              <button className="flex items-center justify-center gap-2 border border-outline-variant bg-white p-3 rounded-lg hover:bg-surface-container-low transition-all text-on-surface text-sm font-medium">
-                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>logout</span>
-                Force Logout
-              </button>
-            </div>
-
-            <div className="border-t border-outline-variant/30 pt-4">
-              <p className="text-xs text-on-surface-variant mb-3 uppercase tracking-wider font-medium">Danger Zone</p>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 border border-error/30 text-error bg-error/5 hover:bg-error/10 rounded-lg p-3 text-sm font-medium transition-all"
-              >
-                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>delete_forever</span>
-                Delete Employee Permanently
-              </button>
-              <p className="text-[10px] text-on-surface-variant mt-2 text-center">
-                This will permanently remove the employee and all their data from the system. This action cannot be undone.
-              </p>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* Leave History */}
-      <section className="mt-6 bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
-            <h2 className="text-lg font-semibold text-on-surface">Leave History</h2>
-          </div>
-          <span className="text-xs text-on-surface-variant">{leaveRequests.length} record{leaveRequests.length !== 1 ? "s" : ""}</span>
-        </div>
-
-        {leaveRequests.length === 0 ? (
-          <div className="p-12 text-center">
-            <span className="material-symbols-outlined text-4xl text-outline mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
-            <p className="text-sm text-on-surface-variant">No leave requests yet</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-surface-container-low border-b border-outline-variant">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Dates</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-on-surface-variant uppercase tracking-wider">Days</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Reason</th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-on-surface-variant uppercase tracking-wider">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider">Submitted</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant">
-                {leaveRequests.map((lr) => (
-                  <tr key={lr._id} className="hover:bg-surface-container-low transition-colors">
-                    <td className="px-6 py-4 text-sm text-on-surface">{lr.leaveTypeName}</td>
-                    <td className="px-6 py-4 text-sm text-on-surface">
-                      {format(new Date(lr.startDate), "MMM d")} - {format(new Date(lr.endDate), "MMM d, yyyy")}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-center font-medium">{lr.totalDays}</td>
-                    <td className="px-6 py-4 text-sm text-on-surface-variant max-w-[200px] truncate">{lr.reason}</td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium border ${statusColors[lr.status] || "bg-gray-100 text-gray-800"}`}>
-                        {lr.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-on-surface-variant text-right">
-                      {format(new Date(lr.createdAt), "MMM d, yyyy")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+          </section>
+        </>
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
@@ -715,33 +676,21 @@ export default function EmployeeDetailPage() {
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-
             <div className="px-6 py-4">
               <p className="text-sm text-on-surface">
                 Are you sure you want to permanently delete <span className="font-semibold">{employee.name}</span>?
                 All their data, including leave history, will be removed from the system.
               </p>
             </div>
-
             <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
               <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={saving}
-                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
-              >
-                Cancel
-              </button>
+                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Cancel</button>
               <button onClick={handleDeleteEmployee} disabled={saving}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
-              >
+                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2">
                 {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Deleting...</>
                 ) : (
-                  <>
-                    <span className="material-symbols-outlined text-sm">delete</span>
-                    Delete Permanently
-                  </>
+                  <><span className="material-symbols-outlined text-sm">delete</span> Delete Permanently</>
                 )}
               </button>
             </div>

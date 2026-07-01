@@ -3,7 +3,6 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useRef } from "react";
-import { format } from "date-fns";
 
 interface Employee {
   _id: string;
@@ -50,7 +49,6 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState<Employee | null>(null);
   const [form, setForm] = useState<AddForm>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>(
@@ -182,32 +180,6 @@ export default function EmployeesPage() {
 
       showToast("success", `${form.name} has been added as an employee.`);
       closeAddModal();
-      await fetchEmployees();
-    } catch {
-      showToast("error", "Failed to connect. Please try again.");
-    }
-    setActionLoading(false);
-  }
-
-  async function handleDeleteEmployee() {
-    if (!showDeleteModal) return;
-    setActionLoading(true);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${showDeleteModal._id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${(session as any)?.token}` }
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        showToast("error", data.error || "Failed to delete employee");
-        setActionLoading(false);
-        return;
-      }
-
-      showToast("success", `${showDeleteModal.name} has been deleted.`);
-      setShowDeleteModal(null);
       await fetchEmployees();
     } catch {
       showToast("error", "Failed to connect. Please try again.");
@@ -390,13 +362,6 @@ export default function EmployeesPage() {
                           >
                             <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>visibility</span>
                             View
-                          </button>
-                          <button
-                            onClick={() => setShowDeleteModal(emp)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container border border-error/20 text-xs font-medium hover:bg-error/10 transition-all active:scale-[0.95]"
-                          >
-                            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
-                            Delete
                           </button>
                         </div>
                       </td>
@@ -616,58 +581,6 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowDeleteModal(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm">
-            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">
-                  <span className="material-symbols-outlined text-error text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-on-surface">Delete Employee</h3>
-                  <p className="text-xs text-on-surface-variant mt-0.5">This action cannot be undone</p>
-                </div>
-              </div>
-              <button onClick={() => setShowDeleteModal(null)} className="text-on-surface-variant hover:text-on-surface transition-colors">
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-
-            <div className="px-6 py-4">
-              <p className="text-sm text-on-surface">
-                Are you sure you want to delete <span className="font-semibold">{showDeleteModal.name}</span>?
-                All their data will be permanently removed from the system.
-              </p>
-            </div>
-
-            <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
-              <button type="button" onClick={() => setShowDeleteModal(null)} disabled={actionLoading}
-                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
-              >
-                Cancel
-              </button>
-              <button onClick={handleDeleteEmployee} disabled={actionLoading}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
-              >
-                {actionLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-sm">delete</span>
-                    Delete Permanently
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
