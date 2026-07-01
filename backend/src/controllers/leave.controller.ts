@@ -1,7 +1,9 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { createLeaveRequest, getLeaveRequestsByUser, updateLeaveRequest, getOverlappingLeaves, getLeaveRequestById, getAllLeaveRequests } from "../repositories/leave.repo";
-import { getDB } from "../config/database";
+import { getActiveLeaveTypes } from "../repositories/leaveType.repo";
+import { getLeaveBalance } from "../repositories/leaveBalance.repo";
+import { getAllUsers } from "../repositories/user.repo";
 
 export async function createLeave(req: AuthRequest, res: Response) {
   const { leaveTypeId, startDate, endDate, reason } = req.body;
@@ -79,9 +81,43 @@ export async function rejectLeave(req: AuthRequest, res: Response) {
 
 export async function getAllLeaves(req: AuthRequest, res: Response) {
   try {
-    const requests = await getAllLeaveRequests();
-    res.json(requests);
+    const [requests, users, leaveTypes] = await Promise.all([
+      getAllLeaveRequests(),
+      getAllUsers(),
+      getActiveLeaveTypes()
+    ]);
+
+    const userMap = new Map(users.map((u: any) => [u._id.toString(), { name: u.name, email: u.email }]));
+    const typeMap = new Map(leaveTypes.map((t: any) => [t._id.toString(), t.name]));
+
+    const enriched = requests.map((r: any) => ({
+      ...r,
+      _id: r._id.toString(),
+      user: userMap.get(r.userId) || { name: "Unknown", email: "" },
+      leaveTypeName: typeMap.get(r.leaveTypeId) || "Unknown"
+    }));
+
+    res.json(enriched);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch requests" });
+  }
+}
+
+export async function getAllLeaveTypes(req: AuthRequest, res: Response) {
+  try {
+    const types = await getActiveLeaveTypes();
+    res.json(types);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch leave types" });
+  }
+}
+
+export async function getMyLeaveBalance(req: AuthRequest, res: Response) {
+  try {
+    const currentYear = new Date().getFullYear();
+    const balance = await getLeaveBalance(req.user?.id || "", currentYear);
+    res.json(balance);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch leave balance" });
   }
 }

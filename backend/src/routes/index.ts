@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddleware, adminOnly } from "../middleware/auth";
 import { login, register, getProfile } from "../controllers/auth.controller";
-import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves } from "../controllers/leave.controller";
+import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves, getAllLeaveTypes, getMyLeaveBalance } from "../controllers/leave.controller";
 
 const router = Router();
 
@@ -16,5 +16,9 @@ router.get("/leaves/my", authMiddleware, getMyLeaves);
 router.get("/leaves", authMiddleware, adminOnly, getAllLeaves);
 router.patch("/leaves/:id/approve", authMiddleware, adminOnly, approveLeave);
 router.patch("/leaves/:id/reject", authMiddleware, adminOnly, rejectLeave);
+
+// Leave types & balance
+router.get("/leave-types", authMiddleware, getAllLeaveTypes);
+router.get("/leave-balance", authMiddleware, getMyLeaveBalance);
 
 export default router;
