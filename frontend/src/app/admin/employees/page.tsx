@@ -10,32 +10,48 @@ interface Employee {
   name: string;
   email: string;
   role: string;
+  phone: string;
+  department: string;
+  jobTitle: string;
+  profilePicture: string;
   isActive: boolean;
   createdAt: string;
 }
 
-type ModalMode = "add" | "edit" | "delete" | null;
-
-interface ModalState {
-  mode: ModalMode;
-  employee: Employee | null;
-  form: {
-    name: string;
-    email: string;
-    password: string;
-  };
+interface LeaveType {
+  _id: string;
+  name: string;
+  annualQuota: number;
 }
 
-const emptyForm = { name: "", email: "", password: "" };
+interface AddForm {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  address: string;
+  profilePicture: string;
+  department: string;
+  jobTitle: string;
+  leaveBalances: { leaveTypeId: string; allocated: number }[];
+}
+
+const emptyForm: AddForm = {
+  name: "", email: "", password: "", phone: "", address: "",
+  profilePicture: "", department: "", jobTitle: "",
+  leaveBalances: []
+};
 
 export default function EmployeesPage() {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
 
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState<ModalState>({ mode: null, employee: null, form: emptyForm });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [form, setForm] = useState<AddForm>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>(
     { show: false, type: "success", message: "" }
@@ -46,7 +62,10 @@ export default function EmployeesPage() {
   }, [authStatus, router]);
 
   useEffect(() => {
-    if (session) fetchEmployees();
+    if (session) {
+      fetchEmployees();
+      fetchLeaveTypes();
+    }
   }, [session]);
 
   async function fetchEmployees() {
@@ -64,33 +83,60 @@ export default function EmployeesPage() {
     setLoading(false);
   }
 
+  async function fetchLeaveTypes() {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-types`, {
+        headers: { Authorization: `Bearer ${(session as any)?.token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setLeaveTypes(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const filteredEmployees = useMemo(() => {
     if (!search.trim()) return employees;
     const q = search.toLowerCase();
     return employees.filter(
-      (e) => e.name.toLowerCase().includes(q) || e.email.toLowerCase().includes(q)
+      (e) => e.name.toLowerCase().includes(q) || e.email.toLowerCase().includes(q) || e.department?.toLowerCase().includes(q)
     );
   }, [employees, search]);
 
   function openAddModal() {
-    setModal({ mode: "add", employee: null, form: emptyForm });
+    setForm({
+      ...emptyForm,
+      leaveBalances: leaveTypes.map(lt => ({
+        leaveTypeId: lt._id,
+        allocated: lt.annualQuota || 0
+      }))
+    });
+    setShowAddModal(true);
   }
 
-  function openEditModal(emp: Employee) {
-    setModal({ mode: "edit", employee: emp, form: { name: emp.name, email: emp.email, password: "" } });
-  }
-
-  function openDeleteModal(emp: Employee) {
-    setModal({ mode: "delete", employee: emp, form: emptyForm });
-  }
-
-  function closeModal() {
-    setModal({ mode: null, employee: null, form: emptyForm });
+  function closeAddModal() {
+    setShowAddModal(false);
+    setForm(emptyForm);
   }
 
   function showToast(type: "success" | "error", message: string) {
     setToast({ show: true, type, message });
     setTimeout(() => setToast((t) => ({ ...t, show: false })), 4000);
+  }
+
+  function updateFormField(field: keyof AddForm, value: any) {
+    setForm(f => ({ ...f, [field]: value }));
+  }
+
+  function updateLeaveBalance(leaveTypeId: string, allocated: number) {
+    setForm(f => ({
+      ...f,
+      leaveBalances: f.leaveBalances.map(lb =>
+        lb.leaveTypeId === leaveTypeId ? { ...lb, allocated } : lb
+      )
+    }));
   }
 
   async function handleAddEmployee(e: React.FormEvent) {
@@ -104,7 +150,7 @@ export default function EmployeesPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${(session as any)?.token}`
         },
-        body: JSON.stringify(modal.form)
+        body: JSON.stringify(form)
       });
 
       const data = await res.json();
@@ -115,77 +161,8 @@ export default function EmployeesPage() {
         return;
       }
 
-      showToast("success", `${modal.form.name} has been added as an employee.`);
-      closeModal();
-      await fetchEmployees();
-    } catch {
-      showToast("error", "Failed to connect. Please try again.");
-    }
-    setActionLoading(false);
-  }
-
-  async function handleEditEmployee(e: React.FormEvent) {
-    e.preventDefault();
-    if (!modal.employee) return;
-    setActionLoading(true);
-
-    const body: any = {};
-    if (modal.form.name !== modal.employee.name) body.name = modal.form.name;
-    if (modal.form.email !== modal.employee.email) body.email = modal.form.email;
-    if (modal.form.password) body.password = modal.form.password;
-
-    if (Object.keys(body).length === 0) {
-      showToast("error", "No changes made.");
-      setActionLoading(false);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${modal.employee._id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${(session as any)?.token}`
-        },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        showToast("error", data.error || "Failed to update employee");
-        setActionLoading(false);
-        return;
-      }
-
-      showToast("success", `Employee updated successfully.`);
-      closeModal();
-      await fetchEmployees();
-    } catch {
-      showToast("error", "Failed to connect. Please try again.");
-    }
-    setActionLoading(false);
-  }
-
-  async function handleDeleteEmployee() {
-    if (!modal.employee) return;
-    setActionLoading(true);
-
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${modal.employee._id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${(session as any)?.token}` }
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        showToast("error", data.error || "Failed to delete employee");
-        setActionLoading(false);
-        return;
-      }
-
-      showToast("success", `${modal.employee.name} has been removed.`);
-      closeModal();
+      showToast("success", `${form.name} has been added as an employee.`);
+      closeAddModal();
       await fetchEmployees();
     } catch {
       showToast("error", "Failed to connect. Please try again.");
@@ -312,8 +289,8 @@ export default function EmployeesPage() {
                 <tr className="bg-surface-container-low border-b border-outline-variant">
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Employee</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Email</th>
+                  <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Department</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Status</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Joined</th>
                   <th className="px-5 py-3.5 text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -331,16 +308,38 @@ export default function EmployeesPage() {
                       {/* Name */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-sm font-bold shrink-0">
-                            {initials}
+                          {emp.profilePicture ? (
+                            <img
+                              src={emp.profilePicture}
+                              alt={emp.name}
+                              className="w-9 h-9 rounded-full object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-sm font-bold shrink-0">
+                              {initials}
+                            </div>
+                          )}
+                          <div>
+                            <span className="text-sm font-medium text-on-surface">{emp.name}</span>
+                            {emp.jobTitle && (
+                              <p className="text-xs text-on-surface-variant">{emp.jobTitle}</p>
+                            )}
                           </div>
-                          <span className="text-sm font-medium text-on-surface">{emp.name}</span>
                         </div>
                       </td>
 
                       {/* Email */}
                       <td className="px-5 py-4">
                         <span className="text-sm text-on-surface-variant">{emp.email}</span>
+                      </td>
+
+                      {/* Department */}
+                      <td className="px-5 py-4">
+                        {emp.department ? (
+                          <span className="text-sm text-on-surface">{emp.department}</span>
+                        ) : (
+                          <span className="text-sm text-on-surface-variant italic">—</span>
+                        )}
                       </td>
 
                       {/* Status */}
@@ -355,38 +354,16 @@ export default function EmployeesPage() {
                         </span>
                       </td>
 
-                      {/* Joined */}
-                      <td className="px-5 py-4">
-                        <span className="text-sm text-on-surface-variant">
-                          {emp.createdAt ? format(new Date(emp.createdAt), "MMM d, yyyy") : "—"}
-                        </span>
-                      </td>
-
                       {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          {emp.isActive ? (
-                            <>
-                              <button
-                                onClick={() => openEditModal(emp)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-fixed text-primary border border-primary-fixed-dim text-xs font-medium hover:bg-primary-fixed-dim transition-all active:scale-[0.95]"
-                              >
-                                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>edit</span>
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => openDeleteModal(emp)}
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container border border-error/20 text-xs font-medium hover:bg-error/10 transition-all active:scale-[0.95]"
-                              >
-                                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>block</span>
-                                Deactivate
-                              </button>
-                            </>
-                          ) : (
-                            <div className="flex justify-end">
-                              <span className="text-xs text-on-surface-variant italic">Deactivated</span>
-                            </div>
-                          )}
+                          <button
+                            onClick={() => router.push(`/admin/employees/${emp._id}`)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-fixed text-primary border border-primary-fixed-dim text-xs font-medium hover:bg-primary-fixed-dim transition-all active:scale-[0.95]"
+                          >
+                            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>visibility</span>
+                            View
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -399,11 +376,11 @@ export default function EmployeesPage() {
       </div>
 
       {/* Add Employee Modal */}
-      {modal.mode === "add" && (
+      {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-md">
-            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeAddModal} />
+          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
                   <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>person_add</span>
@@ -413,59 +390,159 @@ export default function EmployeesPage() {
                   <p className="text-xs text-on-surface-variant mt-0.5">Create a new employee account</p>
                 </div>
               </div>
-              <button onClick={closeModal} className="text-on-surface-variant hover:text-on-surface transition-colors">
+              <button onClick={closeAddModal} className="text-on-surface-variant hover:text-on-surface transition-colors">
                 <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
             <form onSubmit={handleAddEmployee}>
-              <div className="px-6 py-4 space-y-4">
+              <div className="px-6 py-4 space-y-6">
+                {/* Profile Picture */}
                 <div>
-                  <label htmlFor="empName" className="block text-sm font-medium text-on-surface mb-1.5">Full Name</label>
-                  <input
-                    id="empName"
-                    type="text"
-                    value={modal.form.name}
-                    onChange={(e) => setModal({ ...modal, form: { ...modal.form, name: e.target.value } })}
-                    placeholder="Jane Doe"
-                    required
-                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50 text-sm"
+                  <label className="block text-sm font-medium text-on-surface mb-2">Profile Photo</label>
+                  <div className="flex items-center gap-4">
+                    {form.profilePicture ? (
+                      <img src={form.profilePicture} alt="Preview" className="w-16 h-16 rounded-full object-cover border border-outline-variant" />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center border border-dashed border-outline-variant">
+                        <span className="material-symbols-outlined text-on-surface-variant text-2xl">person</span>
+                      </div>
+                    )}
+                    <input
+                      type="text"
+                      value={form.profilePicture}
+                      onChange={(e) => updateFormField("profilePicture", e.target.value)}
+                      placeholder="Paste image URL..."
+                      className="flex-1 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    />
+                  </div>
+                  <p className="text-xs text-on-surface-variant mt-1.5">Enter a URL for the employee&apos;s profile photo</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-1.5">Full Name *</label>
+                    <input
+                      type="text"
+                      value={form.name}
+                      onChange={(e) => updateFormField("name", e.target.value)}
+                      placeholder="Jane Doe"
+                      required
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-1.5">Email Address *</label>
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => updateFormField("email", e.target.value)}
+                      placeholder="jane@company.com"
+                      required
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-1.5">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={form.phone}
+                      onChange={(e) => updateFormField("phone", e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-1.5">Password *</label>
+                    <input
+                      type="password"
+                      value={form.password}
+                      onChange={(e) => updateFormField("password", e.target.value)}
+                      placeholder="At least 6 characters"
+                      required
+                      minLength={6}
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-on-surface mb-1.5">Residential Address</label>
+                  <textarea
+                    value={form.address}
+                    onChange={(e) => updateFormField("address", e.target.value)}
+                    placeholder="Street, City, State, ZIP Code"
+                    rows={2}
+                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm resize-none"
                   />
                 </div>
-                <div>
-                  <label htmlFor="empEmail" className="block text-sm font-medium text-on-surface mb-1.5">Email Address</label>
-                  <input
-                    id="empEmail"
-                    type="email"
-                    value={modal.form.email}
-                    onChange={(e) => setModal({ ...modal, form: { ...modal.form, email: e.target.value } })}
-                    placeholder="jane@company.com"
-                    required
-                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50 text-sm"
-                  />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-1.5">Department</label>
+                    <select
+                      value={form.department}
+                      onChange={(e) => updateFormField("department", e.target.value)}
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    >
+                      <option value="">Select department</option>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Product Management">Product Management</option>
+                      <option value="Human Resources">Human Resources</option>
+                      <option value="Finance">Finance</option>
+                      <option value="Marketing">Marketing</option>
+                      <option value="Sales">Sales</option>
+                      <option value="Operations">Operations</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-on-surface mb-1.5">Job Title</label>
+                    <input
+                      type="text"
+                      value={form.jobTitle}
+                      onChange={(e) => updateFormField("jobTitle", e.target.value)}
+                      placeholder="e.g. Senior Software Engineer"
+                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label htmlFor="empPassword" className="block text-sm font-medium text-on-surface mb-1.5">Password</label>
-                  <input
-                    id="empPassword"
-                    type="password"
-                    value={modal.form.password}
-                    onChange={(e) => setModal({ ...modal, form: { ...modal.form, password: e.target.value } })}
-                    placeholder="At least 6 characters"
-                    required
-                    minLength={6}
-                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50 text-sm"
-                  />
+
+                {/* Leave Balances */}
+                <div className="bg-surface-container-low rounded-lg p-4 border border-outline-variant">
+                  <h4 className="text-sm font-semibold text-on-surface mb-3 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-base" style={{ fontVariationSettings: "'FILL' 1" }}>event_available</span>
+                    Initial Leave Balances
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {leaveTypes.map((lt) => {
+                      const lb = form.leaveBalances.find(b => b.leaveTypeId === lt._id);
+                      return (
+                        <div key={lt._id} className="bg-white rounded-lg border border-outline-variant p-3">
+                          <label className="block text-xs font-medium text-on-surface-variant mb-1">{lt.name}</label>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              min={0}
+                              value={lb?.allocated ?? 0}
+                              onChange={(e) => updateLeaveBalance(lt._id, parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-1.5 border border-outline-variant rounded-lg text-sm font-medium text-on-surface focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            />
+                            <span className="text-xs text-on-surface-variant">days</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
               <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
-                <button type="button" onClick={closeModal} disabled={actionLoading}
+                <button type="button" onClick={closeAddModal} disabled={actionLoading}
                   className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
                 >
                   Cancel
                 </button>
-                <button type="submit" disabled={actionLoading || !modal.form.name || !modal.form.email || !modal.form.password}
+                <button type="submit" disabled={actionLoading || !form.name || !form.email || !form.password}
                   className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
                 >
                   {actionLoading ? (
@@ -482,148 +559,6 @@ export default function EmployeesPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Employee Modal */}
-      {modal.mode === "edit" && modal.employee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-md">
-            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
-                  <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>edit</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-on-surface">Edit Employee</h3>
-                  <p className="text-xs text-on-surface-variant mt-0.5">Update {modal.employee.name}&apos;s details</p>
-                </div>
-              </div>
-              <button onClick={closeModal} className="text-on-surface-variant hover:text-on-surface transition-colors">
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleEditEmployee}>
-              <div className="px-6 py-4 space-y-4">
-                <div>
-                  <label htmlFor="editName" className="block text-sm font-medium text-on-surface mb-1.5">Full Name</label>
-                  <input
-                    id="editName"
-                    type="text"
-                    value={modal.form.name}
-                    onChange={(e) => setModal({ ...modal, form: { ...modal.form, name: e.target.value } })}
-                    required
-                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="editEmail" className="block text-sm font-medium text-on-surface mb-1.5">Email Address</label>
-                  <input
-                    id="editEmail"
-                    type="email"
-                    value={modal.form.email}
-                    onChange={(e) => setModal({ ...modal, form: { ...modal.form, email: e.target.value } })}
-                    required
-                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="editPassword" className="block text-sm font-medium text-on-surface mb-1.5">
-                    New Password <span className="text-on-surface-variant font-normal">(leave blank to keep current)</span>
-                  </label>
-                  <input
-                    id="editPassword"
-                    type="password"
-                    value={modal.form.password}
-                    onChange={(e) => setModal({ ...modal, form: { ...modal.form, password: e.target.value } })}
-                    placeholder="Leave blank to keep current"
-                    minLength={6}
-                    className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
-                <button type="button" onClick={closeModal} disabled={actionLoading}
-                  className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
-                >
-                  Cancel
-                </button>
-                <button type="submit" disabled={actionLoading || !modal.form.name || !modal.form.email}
-                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
-                >
-                  {actionLoading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-sm">save</span>
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Deactivate Confirmation Modal */}
-      {modal.mode === "delete" && modal.employee && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm">
-            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">
-                  <span className="material-symbols-outlined text-error text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>block</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-on-surface">Deactivate Employee</h3>
-                  <p className="text-xs text-on-surface-variant mt-0.5">They won&apos;t be able to sign in</p>
-                </div>
-              </div>
-              <button onClick={closeModal} className="text-on-surface-variant hover:text-on-surface transition-colors">
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-
-            <div className="px-6 py-4">
-              <p className="text-sm text-on-surface">
-                Are you sure you want to deactivate <span className="font-semibold">{modal.employee.name}</span>?
-              </p>
-              <p className="text-xs text-on-surface-variant mt-2">
-                Their account will be disabled, but their leave history will be preserved. They won&apos;t be able to sign in until reactivated.
-              </p>
-            </div>
-
-            <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
-              <button onClick={closeModal} disabled={actionLoading}
-                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
-              >
-                Cancel
-              </button>
-              <button onClick={handleDeleteEmployee} disabled={actionLoading}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:bg-error/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
-              >
-                {actionLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deactivating...
-                  </>
-                ) : (
-                  <>
-                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>block</span>
-                    Deactivate
-                  </>
-                )}
-              </button>
-            </div>
           </div>
         </div>
       )}
