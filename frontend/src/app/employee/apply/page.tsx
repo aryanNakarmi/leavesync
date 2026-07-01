@@ -35,6 +35,7 @@ export default function ApplyLeavePage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<{ show: boolean; type: "submitting" | "success" | "error"; message: string } | null>(null);
 
   // Form state
   const [selectedTypeId, setSelectedTypeId] = useState("");
@@ -126,6 +127,8 @@ export default function ApplyLeavePage() {
     }
 
     try {
+      setToast({ show: true, type: "submitting", message: "Submitting your leave request..." });
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves`, {
         method: "POST",
         headers: {
@@ -143,6 +146,7 @@ export default function ApplyLeavePage() {
       const data = await res.json();
 
       if (!res.ok) {
+        setToast(null);
         setError(data.error || "Failed to submit leave request");
         setSubmitting(false);
         return;
@@ -150,15 +154,18 @@ export default function ApplyLeavePage() {
 
       setSuccess(true);
       setSubmitting(false);
+      setToast({ show: true, type: "success", message: `Leave request submitted! ${totalDays} day${totalDays > 1 ? "s" : ""} of ${selectedType?.name || "leave"} sent for approval.` });
 
-      // Reset form after 3 seconds
+      // Dismiss toast and reset form after 4 seconds
       setTimeout(() => {
+        setToast(null);
         setSuccess(false);
         setStartDate("");
         setEndDate("");
         setReason("");
-      }, 3000);
+      }, 4000);
     } catch {
+      setToast(null);
       setError("Unable to connect. Please try again.");
       setSubmitting(false);
     }
@@ -182,21 +189,34 @@ export default function ApplyLeavePage() {
         <p className="text-on-surface-variant mt-1">Submit a new leave request</p>
       </div>
 
-      {/* Success banner */}
-      {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3">
-          <span
-            className="material-symbols-outlined text-green-600 text-xl"
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            check_circle
-          </span>
-          <div>
-            <p className="font-semibold text-green-800">Leave request submitted!</p>
-            <p className="text-sm text-green-700">
-              Your {selectedType?.name.toLowerCase()} request for {totalDays} day{totalDays > 1 ? "s" : ""} has been sent for approval.
-            </p>
-          </div>
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-6 right-6 z-50 p-4 rounded-xl shadow-xl border flex items-center gap-3 transition-all animate-[slideIn_0.3s_ease-out] ${
+          toast.type === "success"
+            ? "bg-green-50 border-green-200"
+            : toast.type === "submitting"
+            ? "bg-blue-50 border-blue-200"
+            : "bg-error-container border-error/20"
+        }`}>
+          {toast.type === "submitting" ? (
+            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
+          ) : (
+            <span
+              className={`material-symbols-outlined text-xl shrink-0 ${
+                toast.type === "success" ? "text-green-600" : "text-error"
+              }`}
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              {toast.type === "success" ? "check_circle" : "error"}
+            </span>
+          )}
+          <p className={`text-sm ${
+            toast.type === "success" ? "text-green-800"
+            : toast.type === "submitting" ? "text-blue-800"
+            : "text-on-error-container"
+          }`}>
+            {toast.message}
+          </p>
         </div>
       )}
 
