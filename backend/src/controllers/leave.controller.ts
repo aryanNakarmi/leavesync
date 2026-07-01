@@ -22,6 +22,29 @@ export async function createLeave(req: AuthRequest, res: Response) {
     // Calculate days
     const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
+    // Check leave balance
+    const currentYear = new Date().getFullYear();
+    const balances = await getLeaveBalance(userId!, currentYear);
+    const typeBalance = balances.find((b: any) => b.leaveTypeId === leaveTypeId);
+
+    if (typeBalance) {
+      const remaining = (typeBalance.allocated + typeBalance.carriedOver) - typeBalance.used;
+      if (totalDays > remaining) {
+        return res.status(422).json({
+          error: `Insufficient balance. You have ${remaining} day${remaining === 1 ? "" : "s"} remaining for this leave type.`
+        });
+      }
+    } else {
+      // No balance record found - check if this leave type exists and has quota
+      const leaveTypes = await getActiveLeaveTypes();
+      const leaveType = leaveTypes.find((t: any) => t._id.toString() === leaveTypeId || t._id === leaveTypeId);
+      if (leaveType && leaveType.annualQuota > 0) {
+        return res.status(422).json({
+          error: `No balance record found for this leave type. Please contact an administrator.`
+        });
+      }
+    }
+
     const requestId = await createLeaveRequest({
       userId: userId!,
       leaveTypeId,
