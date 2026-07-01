@@ -136,6 +136,7 @@ export default function EmployeeDashboard() {
                   <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Dates</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Days</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Status</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-on-surface-variant">Admin Note</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant">
@@ -149,6 +150,15 @@ export default function EmployeeDashboard() {
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[leave.status] || "bg-gray-100 text-gray-800"}`}>
                         {leave.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-on-surface-variant max-w-[200px]">
+                      {leave.adminComment ? (
+                        <span className="truncate block" title={leave.adminComment}>
+                          {leave.adminComment}
+                        </span>
+                      ) : (
+                        <span className="italic text-on-surface-variant/50">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
