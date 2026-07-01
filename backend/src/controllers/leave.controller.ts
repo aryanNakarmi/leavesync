@@ -64,7 +64,14 @@ export async function createLeave(req: AuthRequest, res: Response) {
 export async function getMyLeaves(req: AuthRequest, res: Response) {
   try {
     const requests = await getLeaveRequestsByUser(req.user?.id || "");
-    res.json(requests);
+    const leaveTypes = await getActiveLeaveTypes();
+    const typeMap = new Map(leaveTypes.map((t: any) => [t._id.toString(), t.name]));
+    const enriched = requests.map((r: any) => ({
+      ...r,
+      _id: r._id.toString(),
+      leaveTypeName: typeMap.get(r.leaveTypeId) || "Unknown"
+    }));
+    res.json(enriched);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch leave requests" });
   }

@@ -33,7 +33,6 @@ export default function ApplyLeavePage() {
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<{ show: boolean; type: "submitting" | "success" | "error"; message: string } | null>(null);
 
@@ -152,14 +151,12 @@ export default function ApplyLeavePage() {
         return;
       }
 
-      setSuccess(true);
       setSubmitting(false);
       setToast({ show: true, type: "success", message: `Leave request submitted! ${totalDays} day${totalDays > 1 ? "s" : ""} of ${selectedType?.name || "leave"} sent for approval.` });
 
       // Dismiss toast and reset form after 4 seconds
       setTimeout(() => {
         setToast(null);
-        setSuccess(false);
         setStartDate("");
         setEndDate("");
         setReason("");
