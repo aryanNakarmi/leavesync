@@ -144,3 +144,9 @@ export async function activateUser(id: string) {
   );
   return result.modifiedCount > 0;
 }
+
+export async function deleteUser(id: string) {
+  const db = getDB();
+  const result = await db.collection("User").deleteOne({ _id: new ObjectId(id) });
+  return result.deletedCount > 0;
+}

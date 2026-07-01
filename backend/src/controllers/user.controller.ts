@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
-import { getAllUsers, getUserByEmail, getUserById, createUser, updateUser, deactivateUser, activateUser, getEmployeeWithDetails, setLeaveBalance } from "../repositories/user.repo";
+import { getAllUsers, getUserByEmail, getUserById, createUser, updateUser, deleteUser, getEmployeeWithDetails, setLeaveBalance } from "../repositories/user.repo";
 import { WithId, Document, ObjectId } from "mongodb";
 
 export async function getAllEmployees(req: AuthRequest, res: Response) {
@@ -190,16 +190,10 @@ export async function removeEmployee(req: AuthRequest, res: Response) {
       return res.status(404).json({ error: "Employee not found" });
     }
 
-    // Toggle active status
-    if (user.isActive) {
-      await deactivateUser(id);
-      res.json({ message: "Employee deactivated successfully", isActive: false });
-    } else {
-      await activateUser(id);
-      res.json({ message: "Employee activated successfully", isActive: true });
-    }
+    await deleteUser(id);
+    res.json({ message: "Employee deleted successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to update employee status" });
+    res.status(500).json({ error: "Failed to delete employee" });
   }
 }
 
