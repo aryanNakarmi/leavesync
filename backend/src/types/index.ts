@@ -4,7 +4,15 @@ export interface User {
   email: string;
   password: string;
   role: "EMPLOYEE" | "ADMIN";
-  departmentId?: string;
+  department?: string;
+  jobTitle?: string;
+  phone?: string;
+  address?: string;
+  profilePicture?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  employmentType?: string;
+  joinDate?: string;
   isActive: boolean;
   createdAt: Date;
 }

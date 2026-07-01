@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authMiddleware, adminOnly } from "../middleware/auth";
 import { login, register, getProfile } from "../controllers/auth.controller";
 import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves, getAllLeaveTypes, getMyLeaveBalance } from "../controllers/leave.controller";
-import { getAllEmployees, createEmployee, updateEmployee, removeEmployee } from "../controllers/user.controller";
+import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";
 
 const router = Router();
 
@@ -24,8 +24,10 @@ router.get("/leave-balance", authMiddleware, getMyLeaveBalance);
 
 // User management (admin only)
 router.get("/users", authMiddleware, adminOnly, getAllEmployees);
+router.get("/users/:id", authMiddleware, adminOnly, getEmployeeDetail);
 router.post("/users", authMiddleware, adminOnly, createEmployee);
 router.patch("/users/:id", authMiddleware, adminOnly, updateEmployee);
 router.delete("/users/:id", authMiddleware, adminOnly, removeEmployee);
+router.patch("/users/:id/leave-balances", authMiddleware, adminOnly, updateEmployeeLeaveBalances);
 
 export default router;
