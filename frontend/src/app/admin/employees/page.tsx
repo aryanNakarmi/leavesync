@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { format } from "date-fns";
 
 interface Employee {
@@ -14,7 +14,6 @@ interface Employee {
   department: string;
   jobTitle: string;
   profilePicture: string;
-  isActive: boolean;
   createdAt: string;
 }
 
@@ -51,11 +50,13 @@ export default function EmployeesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<Employee | null>(null);
   const [form, setForm] = useState<AddForm>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>(
     { show: false, type: "success", message: "" }
   );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (authStatus === "unauthenticated") router.push("/login");
@@ -139,9 +140,27 @@ export default function EmployeesPage() {
     }));
   }
 
+  function handleProfileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      updateFormField("profilePicture", dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function handleAddEmployee(e: React.FormEvent) {
     e.preventDefault();
     setActionLoading(true);
+
+    const body = {
+      ...form,
+      // If profile picture is a local data URL, we send it as base64 directly
+      // The backend stores whatever string is passed
+    };
 
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
@@ -150,7 +169,7 @@ export default function EmployeesPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${(session as any)?.token}`
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify(body)
       });
 
       const data = await res.json();
@@ -170,7 +189,32 @@ export default function EmployeesPage() {
     setActionLoading(false);
   }
 
-  const activeCount = employees.filter((e) => e.isActive).length;
+  async function handleDeleteEmployee() {
+    if (!showDeleteModal) return;
+    setActionLoading(true);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${showDeleteModal._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${(session as any)?.token}` }
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        showToast("error", data.error || "Failed to delete employee");
+        setActionLoading(false);
+        return;
+      }
+
+      showToast("success", `${showDeleteModal.name} has been deleted.`);
+      setShowDeleteModal(null);
+      await fetchEmployees();
+    } catch {
+      showToast("error", "Failed to connect. Please try again.");
+    }
+    setActionLoading(false);
+  }
+
   const totalCount = employees.length;
 
   if (authStatus === "loading") {
@@ -213,14 +257,10 @@ export default function EmployeesPage() {
 
       {/* Stats + Search + Add */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="bg-white rounded-xl border border-outline-variant px-4 py-2.5 shadow-sm">
             <p className="text-xs text-on-surface-variant font-medium">Total</p>
             <p className="text-lg font-bold text-on-surface">{totalCount}</p>
-          </div>
-          <div className="bg-white rounded-xl border border-outline-variant px-4 py-2.5 shadow-sm">
-            <p className="text-xs text-on-surface-variant font-medium">Active</p>
-            <p className="text-lg font-bold text-green-600">{activeCount}</p>
           </div>
         </div>
 
@@ -290,7 +330,6 @@ export default function EmployeesPage() {
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Employee</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Email</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Department</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Status</th>
                   <th className="px-5 py-3.5 text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -342,18 +381,6 @@ export default function EmployeesPage() {
                         )}
                       </td>
 
-                      {/* Status */}
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-                          emp.isActive
-                            ? "bg-green-50 text-green-700 border-green-200"
-                            : "bg-surface-container-high text-on-surface-variant border-outline-variant"
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${emp.isActive ? "bg-green-500" : "bg-outline"}`} />
-                          {emp.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-
                       {/* Actions */}
                       <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
@@ -363,6 +390,13 @@ export default function EmployeesPage() {
                           >
                             <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>visibility</span>
                             View
+                          </button>
+                          <button
+                            onClick={() => setShowDeleteModal(emp)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-error-container text-on-error-container border border-error/20 text-xs font-medium hover:bg-error/10 transition-all active:scale-[0.95]"
+                          >
+                            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -397,7 +431,7 @@ export default function EmployeesPage() {
 
             <form onSubmit={handleAddEmployee}>
               <div className="px-6 py-4 space-y-6">
-                {/* Profile Picture */}
+                {/* Profile Picture - File Upload */}
                 <div>
                   <label className="block text-sm font-medium text-on-surface mb-2">Profile Photo</label>
                   <div className="flex items-center gap-4">
@@ -408,15 +442,34 @@ export default function EmployeesPage() {
                         <span className="material-symbols-outlined text-on-surface-variant text-2xl">person</span>
                       </div>
                     )}
-                    <input
-                      type="text"
-                      value={form.profilePicture}
-                      onChange={(e) => updateFormField("profilePicture", e.target.value)}
-                      placeholder="Paste image URL..."
-                      className="flex-1 px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
-                    />
+                    <div className="flex-1">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleProfileUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2.5 border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload</span>
+                        Upload from device
+                      </button>
+                      {form.profilePicture && (
+                        <button
+                          type="button"
+                          onClick={() => updateFormField("profilePicture", "")}
+                          className="ml-2 text-xs text-error hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-on-surface-variant mt-1.5">Enter a URL for the employee&apos;s profile photo</p>
+                  <p className="text-xs text-on-surface-variant mt-1.5">JPG or PNG, max 2MB recommended</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -559,6 +612,59 @@ export default function EmployeesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowDeleteModal(null)} />
+          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm">
+            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">
+                  <span className="material-symbols-outlined text-error text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-on-surface">Delete Employee</h3>
+                  <p className="text-xs text-on-surface-variant mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setShowDeleteModal(null)} className="text-on-surface-variant hover:text-on-surface transition-colors">
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <div className="px-6 py-4">
+              <p className="text-sm text-on-surface">
+                Are you sure you want to delete <span className="font-semibold">{showDeleteModal.name}</span>?
+                All their data will be permanently removed from the system.
+              </p>
+            </div>
+
+            <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
+              <button type="button" onClick={() => setShowDeleteModal(null)} disabled={actionLoading}
+                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                Cancel
+              </button>
+              <button onClick={handleDeleteEmployee} disabled={actionLoading}
+                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
+              >
+                {actionLoading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

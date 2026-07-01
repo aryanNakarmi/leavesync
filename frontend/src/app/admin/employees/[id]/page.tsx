@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -20,7 +20,6 @@ interface Employee {
   gender: string;
   employmentType: string;
   joinDate: string;
-  isActive: boolean;
   createdAt: string;
 }
 
@@ -80,6 +79,8 @@ export default function EmployeeDetailPage() {
   const [saving, setSaving] = useState(false);
   const [savingBalances, setSavingBalances] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Editable form state
   const [form, setForm] = useState({
@@ -156,6 +157,35 @@ export default function EmployeeDetailPage() {
     setTimeout(() => setToast((t) => ({ ...t, show: false })), 4000);
   }
 
+  function handleProfileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setForm(f => ({ ...f, profilePicture: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resetForm() {
+    if (!data) return;
+    const emp = data.employee;
+    setForm({
+      name: emp.name,
+      phone: emp.phone || "",
+      address: emp.address || "",
+      profilePicture: emp.profilePicture || "",
+      department: emp.department || "",
+      jobTitle: emp.jobTitle || "",
+      dateOfBirth: emp.dateOfBirth || "",
+      gender: emp.gender || "",
+      employmentType: emp.employmentType || "Full-Time",
+      joinDate: emp.joinDate || ""
+    });
+  }
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -214,29 +244,26 @@ export default function EmployeeDetailPage() {
     setSavingBalances(false);
   }
 
-  async function handleToggleActive() {
+  async function handleDeleteEmployee() {
     setSaving(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${(session as any)?.token}`
-        },
-        body: JSON.stringify({ isActive: !data?.employee.isActive })
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${(session as any)?.token}` }
       });
 
       if (res.ok) {
-        showToast("success", `Employee ${data?.employee.isActive ? "deactivated" : "activated"} successfully`);
-        await fetchEmployeeDetail();
+        showToast("success", "Employee deleted successfully");
+        setTimeout(() => router.push("/admin/employees"), 800);
       } else {
         const errData = await res.json();
-        showToast("error", errData.error || "Failed to update status");
+        showToast("error", errData.error || "Failed to delete employee");
       }
     } catch {
       showToast("error", "Failed to connect. Please try again.");
     }
     setSaving(false);
+    setShowDeleteConfirm(false);
   }
 
   if (authStatus === "loading" || loading) {
@@ -300,17 +327,7 @@ export default function EmployeeDetailPage() {
           <span className="text-primary font-medium">{employee.name}</span>
         </nav>
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-on-surface">{employee.name}</h1>
-            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${
-              employee.isActive
-                ? "bg-green-50 text-green-700 border-green-200"
-                : "bg-surface-container-high text-on-surface-variant border-outline-variant"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${employee.isActive ? "bg-green-500" : "bg-outline"}`} />
-              {employee.isActive ? "Active" : "Inactive"}
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold text-on-surface">{employee.name}</h1>
           {!editing && (
             <button onClick={() => setEditing(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:brightness-110 transition-all active:scale-[0.97]">
@@ -332,7 +349,7 @@ export default function EmployeeDetailPage() {
           {editing ? (
             <form onSubmit={handleSaveProfile}>
               <div className="space-y-4">
-                {/* Profile Picture */}
+                {/* Profile Picture - File Upload */}
                 <div className="flex items-center gap-4">
                   {form.profilePicture ? (
                     <img src={form.profilePicture} alt="Profile" className="w-20 h-20 rounded-xl object-cover border border-outline-variant" />
@@ -341,15 +358,31 @@ export default function EmployeeDetailPage() {
                       <span className="material-symbols-outlined text-3xl text-on-surface-variant">person</span>
                     </div>
                   )}
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-on-surface-variant mb-1">Profile Photo URL</label>
+                  <div>
                     <input
-                      type="text"
-                      value={form.profilePicture}
-                      onChange={(e) => setForm(f => ({ ...f, profilePicture: e.target.value }))}
-                      placeholder="Image URL"
-                      className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleProfileUpload}
+                      className="hidden"
                     />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-4 py-2 border border-outline-variant rounded-lg text-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2"
+                    >
+                      <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>upload</span>
+                      Upload photo
+                    </button>
+                    {form.profilePicture && (
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, profilePicture: "" }))}
+                        className="ml-2 text-xs text-error hover:underline"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -398,13 +431,7 @@ export default function EmployeeDetailPage() {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-2">
-                  <button type="button" onClick={() => { setEditing(false); setForm({
-                    name: employee.name, phone: employee.phone, address: employee.address,
-                    profilePicture: employee.profilePicture, department: employee.department,
-                    jobTitle: employee.jobTitle, dateOfBirth: employee.dateOfBirth,
-                    gender: employee.gender, employmentType: employee.employmentType,
-                    joinDate: employee.joinDate
-                  }); }}
+                  <button type="button" onClick={() => { setEditing(false); resetForm(); }}
                     className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">
                     Cancel
                   </button>
@@ -580,34 +607,14 @@ export default function EmployeeDetailPage() {
           </button>
         </section>
 
-        {/* Account Status */}
+        {/* Account Settings - now just a Delete section */}
         <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-5">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>lock_person</span>
-            <h2 className="text-lg font-semibold text-on-surface">Account Settings</h2>
+            <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>lock_person</span>
+            <h2 className="text-lg font-semibold text-on-surface">Account Actions</h2>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-lg border border-outline-variant/30">
-              <div>
-                <p className="font-medium text-on-surface text-sm">Account Status</p>
-                <p className="text-xs text-on-surface-variant mt-0.5">
-                  {employee.isActive ? "Employee can sign in to the portal" : "Employee access has been suspended"}
-                </p>
-              </div>
-              <button
-                onClick={handleToggleActive}
-                disabled={saving}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  employee.isActive ? "bg-primary" : "bg-secondary-fixed-dim"
-                }`}
-              >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                  employee.isActive ? "translate-x-[22px]" : "translate-x-[2px]"
-                }`} />
-              </button>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <button className="flex items-center justify-center gap-2 border border-outline-variant bg-white p-3 rounded-lg hover:bg-surface-container-low transition-all text-on-surface text-sm font-medium">
                 <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>key</span>
@@ -622,23 +629,14 @@ export default function EmployeeDetailPage() {
             <div className="border-t border-outline-variant/30 pt-4">
               <p className="text-xs text-on-surface-variant mb-3 uppercase tracking-wider font-medium">Danger Zone</p>
               <button
-                onClick={handleToggleActive}
-                disabled={saving}
-                className={`w-full flex items-center justify-center gap-2 border rounded-lg p-3 text-sm font-medium transition-all ${
-                  employee.isActive
-                    ? "border-error/30 text-error bg-error/5 hover:bg-error/10"
-                    : "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
-                }`}
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full flex items-center justify-center gap-2 border border-error/30 text-error bg-error/5 hover:bg-error/10 rounded-lg p-3 text-sm font-medium transition-all"
               >
-                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
-                  {employee.isActive ? "block" : "check_circle"}
-                </span>
-                {employee.isActive ? "Deactivate Employee Account" : "Reactivate Employee Account"}
+                <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>delete_forever</span>
+                Delete Employee Permanently
               </button>
               <p className="text-[10px] text-on-surface-variant mt-2 text-center">
-                {employee.isActive
-                  ? "Deactivating will revoke system access immediately. Historical data is preserved."
-                  : "Reactivating will restore full system access for this employee."}
+                This will permanently remove the employee and all their data from the system. This action cannot be undone.
               </p>
             </div>
           </div>
@@ -697,6 +695,59 @@ export default function EmployeeDetailPage() {
           </div>
         )}
       </section>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm">
+            <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">
+                  <span className="material-symbols-outlined text-error text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>delete_forever</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-on-surface">Delete Employee</h3>
+                  <p className="text-xs text-on-surface-variant mt-0.5">This action cannot be undone</p>
+                </div>
+              </div>
+              <button onClick={() => setShowDeleteConfirm(false)} className="text-on-surface-variant hover:text-on-surface transition-colors">
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+
+            <div className="px-6 py-4">
+              <p className="text-sm text-on-surface">
+                Are you sure you want to permanently delete <span className="font-semibold">{employee.name}</span>?
+                All their data, including leave history, will be removed from the system.
+              </p>
+            </div>
+
+            <div className="px-6 py-4 border-t border-outline-variant flex items-center justify-end gap-3 bg-surface-container-low rounded-b-xl">
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                Cancel
+              </button>
+              <button onClick={handleDeleteEmployee} disabled={saving}
+                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Back Button */}
       <div className="mt-6 pb-8">
