@@ -28,7 +28,7 @@ interface LeaveRequest {
 
 interface ModalState {
   open: boolean;
-  action: "approve" | "reject";
+  status: "APPROVED" | "REJECTED";
   request: LeaveRequest | null;
   comment: string;
 }
@@ -53,7 +53,7 @@ export default function LeaveRequestsPage() {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
-  const [modal, setModal] = useState<ModalState>({ open: false, action: "approve", request: null, comment: "" });
+  const [modal, setModal] = useState<ModalState>({ open: false, status: "APPROVED", request: null, comment: "" });
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>({ show: false, type: "success", message: "" });
 
@@ -92,19 +92,19 @@ export default function LeaveRequestsPage() {
     rejected: leaves.filter((l) => l.status === "REJECTED").length,
   }), [leaves]);
 
-  function openModal(action: "approve" | "reject", request: LeaveRequest) {
-    setModal({ open: true, action, request, comment: "" });
+  function openModal(request: LeaveRequest) {
+    setModal({ open: true, status: "APPROVED", request, comment: "" });
   }
 
   function closeModal() {
-    setModal({ open: false, action: "approve", request: null, comment: "" });
+    setModal({ open: false, status: "APPROVED", request: null, comment: "" });
   }
 
   async function handleAction() {
     if (!modal.request) return;
     setActionLoading(true);
 
-    const endpoint = modal.action === "approve"
+    const endpoint = modal.status === "APPROVED"
       ? `${process.env.NEXT_PUBLIC_API_URL}/leaves/${modal.request._id}/approve`
       : `${process.env.NEXT_PUBLIC_API_URL}/leaves/${modal.request._id}/reject`;
 
@@ -119,7 +119,7 @@ export default function LeaveRequestsPage() {
       });
 
       if (res.ok) {
-        const actionLabel = modal.action === "approve" ? "approved" : "rejected";
+        const actionLabel = modal.status === "APPROVED" ? "approved" : "rejected";
         setToast({ show: true, type: "success", message: `Leave request ${actionLabel} successfully!` });
         closeModal();
         await fetchLeaves();
@@ -330,25 +330,21 @@ export default function LeaveRequestsPage() {
                       {/* Actions */}
                       <td className="px-5 py-4">
                         {isPending ? (
-                          <div className="flex items-center justify-end gap-2">
+                          <div className="flex justify-end">
                             <button
-                              onClick={() => openModal("approve", leave)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 text-green-700 border border-green-200 text-xs font-medium hover:bg-green-100 transition-all active:scale-[0.95]"
+                              onClick={() => openModal(leave)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-fixed text-primary border border-primary-fixed-dim text-xs font-medium hover:bg-primary-fixed-dim transition-all active:scale-[0.95]"
                             >
-                              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check</span>
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => openModal("reject", leave)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-medium hover:bg-red-100 transition-all active:scale-[0.95]"
-                            >
-                              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>close</span>
-                              Reject
+                              <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>rate_review</span>
+                              Review
                             </button>
                           </div>
                         ) : (
                           <div className="flex justify-end">
-                            <span className="text-xs text-on-surface-variant italic">
+                            <span className="text-xs text-on-surface-variant italic flex items-center gap-1">
+                              <span className="material-symbols-outlined text-sm">
+                                {leave.status === "APPROVED" ? "check_circle" : "cancel"}
+                              </span>
                               {leave.status === "APPROVED" ? "Approved" : "Rejected"}
                             </span>
                           </div>
@@ -363,7 +359,7 @@ export default function LeaveRequestsPage() {
         )}
       </div>
 
-      {/* Approve/Reject Modal */}
+      {/* Review Modal */}
       {modal.open && modal.request && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
@@ -373,19 +369,13 @@ export default function LeaveRequestsPage() {
           <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-md">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  modal.action === "approve" ? "bg-green-50" : "bg-red-50"
-                }`}>
-                  <span className={`material-symbols-outlined text-lg ${
-                    modal.action === "approve" ? "text-green-600" : "text-red-600"
-                  }`} style={{ fontVariationSettings: "'FILL' 1" }}>
-                    {modal.action === "approve" ? "check_circle" : "cancel"}
+                <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+                  <span className="material-symbols-outlined text-lg text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    rate_review
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-on-surface">
-                    {modal.action === "approve" ? "Approve" : "Reject"} Leave Request
-                  </h3>
+                  <h3 className="text-lg font-semibold text-on-surface">Review Leave Request</h3>
                   <p className="text-xs text-on-surface-variant mt-0.5">{modal.request.user.name}</p>
                 </div>
               </div>
@@ -417,16 +407,47 @@ export default function LeaveRequestsPage() {
                 </div>
               </div>
 
-              {/* Admin comment */}
+              {/* Decision */}
+              <div>
+                <label className="block text-sm font-medium text-on-surface mb-2">Decision</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModal({ ...modal, status: "APPROVED" })}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 text-sm font-medium transition-all active:scale-[0.98] ${
+                      modal.status === "APPROVED"
+                        ? "border-green-500 bg-green-50 text-green-700"
+                        : "border-outline-variant text-on-surface-variant hover:border-green-300 hover:bg-green-50/50"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModal({ ...modal, status: "REJECTED" })}
+                    className={`flex items-center justify-center gap-2 p-3 rounded-lg border-2 text-sm font-medium transition-all active:scale-[0.98] ${
+                      modal.status === "REJECTED"
+                        ? "border-red-500 bg-red-50 text-red-700"
+                        : "border-outline-variant text-on-surface-variant hover:border-red-300 hover:bg-red-50/50"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>cancel</span>
+                    Reject
+                  </button>
+                </div>
+              </div>
+
+              {/* Admin note */}
               <div>
                 <label htmlFor="adminComment" className="block text-sm font-medium text-on-surface mb-1.5">
-                  {modal.action === "approve" ? "Approval Note (optional)" : "Rejection Reason (recommended)"}
+                  Note to Employee
                 </label>
                 <textarea
                   id="adminComment"
                   value={modal.comment}
                   onChange={(e) => setModal({ ...modal, comment: e.target.value })}
-                  placeholder={modal.action === "approve" ? "e.g. Enjoy your leave! ..." : "e.g. Insufficient balance for these dates..."}
+                  placeholder={"Write a note that the employee will see on their status page..."}
                   rows={3}
                   className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-on-surface placeholder:text-on-surface-variant/50 resize-none text-sm"
                 />
@@ -445,7 +466,7 @@ export default function LeaveRequestsPage() {
                 onClick={handleAction}
                 disabled={actionLoading}
                 className={`px-5 py-2 rounded-lg text-sm font-medium text-white transition-all active:scale-[0.97] flex items-center gap-2 ${
-                  modal.action === "approve"
+                  modal.status === "APPROVED"
                     ? "bg-green-600 hover:bg-green-700"
                     : "bg-red-600 hover:bg-red-700"
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -458,9 +479,9 @@ export default function LeaveRequestsPage() {
                 ) : (
                   <>
                     <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>
-                      {modal.action === "approve" ? "check" : "close"}
+                      {modal.status === "APPROVED" ? "check" : "close"}
                     </span>
-                    {modal.action === "approve" ? "Approve" : "Reject"}
+                    {modal.status === "APPROVED" ? "Confirm Approval" : "Confirm Rejection"}
                   </>
                 )}
               </button>
