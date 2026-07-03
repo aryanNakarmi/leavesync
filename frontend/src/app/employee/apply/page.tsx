@@ -34,7 +34,7 @@ export default function ApplyLeavePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [toast, setToast] = useState<{ show: boolean; type: "submitting" | "success" | "error"; message: string } | null>(null);
+  const [toast, setToast] = useState<{ type: "submitting" | "success"; message: string } | null>(null);
 
   // Form state
   const [selectedTypeId, setSelectedTypeId] = useState("");
@@ -126,7 +126,7 @@ export default function ApplyLeavePage() {
     }
 
     try {
-      setToast({ show: true, type: "submitting", message: "Submitting your leave request..." });
+      setToast({ type: "submitting", message: "Submitting your leave request..." });
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves`, {
         method: "POST",
@@ -152,7 +152,7 @@ export default function ApplyLeavePage() {
       }
 
       setSubmitting(false);
-      setToast({ show: true, type: "success", message: `Leave request submitted! ${totalDays} day${totalDays > 1 ? "s" : ""} of ${selectedType?.name || "leave"} sent for approval.` });
+      setToast({ type: "success", message: `Leave request submitted! ${totalDays} day${totalDays > 1 ? "s" : ""} of ${selectedType?.name || "leave"} sent for approval.` });
 
       // Dismiss toast and reset form after 4 seconds
       setTimeout(() => {
@@ -188,29 +188,23 @@ export default function ApplyLeavePage() {
 
       {/* Toast notification */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-50 p-4 rounded-xl shadow-xl border flex items-center gap-3 transition-all animate-[slideIn_0.3s_ease-out] ${
+        <div className={`fixed top-6 right-6 z-50 p-4 rounded-xl shadow-xl border flex items-center gap-3 animate-[slideIn_0.3s_ease-out] ${
           toast.type === "success"
             ? "bg-green-50 border-green-200"
-            : toast.type === "submitting"
-            ? "bg-blue-50 border-blue-200"
-            : "bg-error-container border-error/20"
+            : "bg-blue-50 border-blue-200"
         }`}>
           {toast.type === "submitting" ? (
             <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
           ) : (
             <span
-              className={`material-symbols-outlined text-xl shrink-0 ${
-                toast.type === "success" ? "text-green-600" : "text-error"
-              }`}
+              className="material-symbols-outlined text-xl shrink-0 text-green-600"
               style={{ fontVariationSettings: "'FILL' 1" }}
             >
-              {toast.type === "success" ? "check_circle" : "error"}
+              check_circle
             </span>
           )}
           <p className={`text-sm ${
-            toast.type === "success" ? "text-green-800"
-            : toast.type === "submitting" ? "text-blue-800"
-            : "text-on-error-container"
+            toast.type === "success" ? "text-green-800" : "text-blue-800"
           }`}>
             {toast.message}
           </p>
