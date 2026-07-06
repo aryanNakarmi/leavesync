@@ -55,3 +55,12 @@ export interface Department {
   name: string;
   createdAt: Date;
 }
+
+export interface Holiday {
+  _id?: string;
+  name: string;
+  date: string; // ISO date string "YYYY-MM-DD"
+  description?: string;
+  isRecurringYearly: boolean;
+  createdAt: Date;
+}

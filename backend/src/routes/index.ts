@@ -2,14 +2,20 @@ import { Router } from "express";
 import { authMiddleware, adminOnly } from "../middleware/auth";
 import { login, register, getProfile } from "../controllers/auth.controller";
 import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves, getMyLeaveBalance } from "../controllers/leave.controller";
-import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";
-import {
+import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";import {
   getAllLeaveTypesHandler,
   getActiveLeaveTypesHandler,
   createLeaveTypeHandler,
   updateLeaveTypeHandler,
   deleteLeaveTypeHandler
 } from "../controllers/leaveType.controller";
+import {
+  getHolidaysHandler,
+  getMonthHolidaysHandler,
+  createHolidayHandler,
+  updateHolidayHandler,
+  deleteHolidayHandler
+} from "../controllers/holiday.controller";
 const router = Router();
 
 // Auth routes
@@ -39,5 +45,12 @@ router.post("/users", authMiddleware, adminOnly, createEmployee);
 router.patch("/users/:id", authMiddleware, adminOnly, updateEmployee);
 router.delete("/users/:id", authMiddleware, adminOnly, removeEmployee);
 router.patch("/users/:id/leave-balances", authMiddleware, adminOnly, updateEmployeeLeaveBalances);
+
+// Holiday routes
+router.get("/holidays", authMiddleware, getHolidaysHandler);
+router.get("/holidays/:year/:month", authMiddleware, getMonthHolidaysHandler);
+router.post("/holidays", authMiddleware, adminOnly, createHolidayHandler);
+router.patch("/holidays/:id", authMiddleware, adminOnly, updateHolidayHandler);
+router.delete("/holidays/:id", authMiddleware, adminOnly, deleteHolidayHandler);
 
 export default router;
