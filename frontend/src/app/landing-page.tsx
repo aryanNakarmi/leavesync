@@ -17,7 +17,7 @@ export default function LandingPage() {
   return (
     <>
       {/* TopNavBar */}
-      <header className="bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 sticky top-0 z-50">
+      <header className="bg-white border-b border-outline-variant/30 sticky top-0 z-50">
         <nav className="flex justify-between items-center h-20 px-6 max-w-7xl mx-auto w-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export default function LandingPage() {
             </div>
 
             <div className="relative">
-              <div className="bg-white rounded-xl border border-outline-variant p-4 soft-shadow">
+              <div className="bg-white rounded-lg border border-outline-variant p-4">
                 <div className="rounded-lg w-full aspect-[4/3] bg-gradient-to-br from-primary-fixed to-surface-container-highest flex items-center justify-center overflow-hidden">
                   <div className="text-center p-8">
                     <img src="/logo.png" alt="LeaveSync" className="h-16 w-auto mx-auto mb-4 opacity-50" />
@@ -165,7 +165,7 @@ export default function LandingPage() {
               </div>
 
               {/* Floating Stat Badge */}
-              <div className="absolute -bottom-6 -left-6 bg-primary p-4 rounded-xl text-white flex items-center gap-4 soft-shadow">
+              <div className="absolute -bottom-6 -left-6 bg-primary p-4 rounded-lg text-white flex items-center gap-4">
                 <div className="bg-white/20 p-2 rounded-lg">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
                     trending_up
