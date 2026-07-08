@@ -2,7 +2,9 @@ import { Router } from "express";
 import { authMiddleware, adminOnly } from "../middleware/auth";
 import { login, register, getProfile } from "../controllers/auth.controller";
 import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves, getMyLeaveBalance } from "../controllers/leave.controller";
-import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";import {
+import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";
+
+import {
   getAllLeaveTypesHandler,
   getActiveLeaveTypesHandler,
   createLeaveTypeHandler,

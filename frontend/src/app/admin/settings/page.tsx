@@ -203,7 +203,7 @@ export default function SettingsPage() {
       )}
 
       {/* Leave Types List */}
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <div className="inline-flex items-center gap-3">
@@ -296,7 +296,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Info card */}
-      <div className="mt-6 p-4 bg-surface-container-low rounded-xl border border-outline-variant flex items-start gap-3">
+      <div className="mt-6 p-4 bg-surface-container-low rounded-lg border border-outline-variant flex items-start gap-3">
         <span className="material-symbols-outlined text-on-surface-variant text-base shrink-0 mt-0.5">info</span>
         <div className="text-xs text-on-surface-variant">
           <p className="font-medium text-on-surface mb-1">How leave types work</p>
@@ -312,8 +312,8 @@ export default function SettingsPage() {
       {/* ─── ADD/EDIT MODAL ─── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-lg">
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} />
+          <div className="relative bg-white rounded-lg border border-outline-variant w-full max-w-lg">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">

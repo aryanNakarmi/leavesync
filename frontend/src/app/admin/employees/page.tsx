@@ -230,7 +230,7 @@ export default function EmployeesPage() {
       {/* Stats + Search + Add */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
-          <div className="bg-white rounded-xl border border-outline-variant px-4 py-2.5 shadow-sm">
+          <div className="bg-white rounded-lg border border-outline-variant px-4 py-2.5">
             <p className="text-xs text-on-surface-variant font-medium">Total</p>
             <p className="text-lg font-bold text-on-surface">{totalCount}</p>
           </div>
@@ -260,7 +260,7 @@ export default function EmployeesPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
             <div className="flex items-center justify-center gap-3">
@@ -377,8 +377,8 @@ export default function EmployeesPage() {
       {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeAddModal} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="absolute inset-0 bg-black/40" onClick={closeAddModal} />
+          <div className="relative bg-white rounded-lg border border-outline-variant w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">

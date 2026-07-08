@@ -346,7 +346,7 @@ export default function EmployeeDetailPage() {
         <form onSubmit={handleSave}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Personal Information */}
-            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+            <section className="bg-white rounded-lg border border-outline-variant p-6">
               <div className="flex items-center gap-2 mb-5">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
                 <h2 className="text-lg font-semibold text-on-surface">Personal Information</h2>
@@ -437,7 +437,7 @@ export default function EmployeeDetailPage() {
             </section>
 
             {/* Job Information */}
-            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+            <section className="bg-white rounded-lg border border-outline-variant p-6">
               <div className="flex items-center gap-2 mb-5">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>work</span>
                 <h2 className="text-lg font-semibold text-on-surface">Job Information</h2>
@@ -480,7 +480,7 @@ export default function EmployeeDetailPage() {
             </section>
 
             {/* Leave Balances (inside edit) */}
-            <section className="lg:col-span-2 bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+            <section className="lg:col-span-2 bg-white rounded-lg border border-outline-variant p-6">
               <div className="flex items-center gap-2 mb-5">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>event_available</span>
                 <h2 className="text-lg font-semibold text-on-surface">Leave Settings</h2>
@@ -536,7 +536,7 @@ export default function EmployeeDetailPage() {
           {/* ===== VIEW MODE: Two-column layout ===== */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Personal Information (read-only) */}
-            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+            <section className="bg-white rounded-lg border border-outline-variant p-6">
               <div className="flex items-center gap-2 mb-5">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
                 <h2 className="text-lg font-semibold text-on-surface">Personal Information</h2>
@@ -565,7 +565,7 @@ export default function EmployeeDetailPage() {
             </section>
 
             {/* Job Information (read-only) */}
-            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+            <section className="bg-white rounded-lg border border-outline-variant p-6">
               <div className="flex items-center gap-2 mb-5">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>work</span>
                 <h2 className="text-lg font-semibold text-on-surface">Job Information</h2>
@@ -582,7 +582,7 @@ export default function EmployeeDetailPage() {
             </section>
 
             {/* Account Actions - only Delete */}
-            <section className="bg-white rounded-xl border border-outline-variant p-6 shadow-sm">
+            <section className="bg-white rounded-lg border border-outline-variant p-6">
               <div className="flex items-center gap-2 mb-5">
                 <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>lock_person</span>
                 <h2 className="text-lg font-semibold text-on-surface">Account Actions</h2>
@@ -603,7 +603,7 @@ export default function EmployeeDetailPage() {
           </div>
 
           {/* Leave History (view mode only) */}
-          <section className="mt-6 bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+          <section className="mt-6 bg-white rounded-lg border border-outline-variant overflow-hidden">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
@@ -660,8 +660,8 @@ export default function EmployeeDetailPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative bg-white rounded-lg border border-outline-variant w-full max-w-sm">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">

@@ -1,7 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import type { NavItem } from "@/components/Sidebar";
@@ -17,12 +17,29 @@ const navItems: NavItem[] = [
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     }
   }, [status, router]);
+
+  // Fetch profile picture from backend (not stored in JWT cookie to avoid size limits)
+  useEffect(() => {
+    if (!session) return;
+    const token = (session as any)?.token;
+    if (!token) return;
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        setProfilePicture(data?.profilePicture || null);
+      })
+      .catch(() => {});
+  }, [session]);
 
   if (status === "loading") {
     return (
@@ -51,6 +68,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
         role="EMPLOYEE"
         userName={session.user?.name}
         userInitials={initials}
+        profilePicture={profilePicture}
       />
 
       <div className="ml-64">

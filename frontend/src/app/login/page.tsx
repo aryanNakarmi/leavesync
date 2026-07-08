@@ -31,14 +31,15 @@ function LoginForm() {
       setError("Invalid email or password. Please check and try again.");
       setLoading(false);
     } else {
-      router.push("/");
+      // Force full page navigation so the server component re-executes getServerSession()
+      window.location.href = "/";
     }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-8">
+        <div className="bg-white rounded-lg border border-outline-variant p-8">
           {/* Branding */}
           <div className="mb-8 text-center">
             <Link href="/" className="inline-flex items-center gap-3 mb-2">

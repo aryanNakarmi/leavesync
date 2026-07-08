@@ -89,7 +89,7 @@ export default function StatusPage() {
           { label: "Approved", value: counts.approved, color: "text-green-600" },
           { label: "Rejected", value: counts.rejected, color: "text-red-600" },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm">
+          <div key={stat.label} className="bg-white rounded-lg border border-outline-variant p-4">
             <p className="text-xs text-on-surface-variant font-medium">{stat.label}</p>
             <p className={`text-2xl font-bold mt-1 ${stat.color}`}>{stat.value}</p>
           </div>
@@ -127,7 +127,7 @@ export default function StatusPage() {
           </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white rounded-xl border border-outline-variant shadow-sm p-12 text-center">
+        <div className="bg-white rounded-lg border border-outline-variant p-12 text-center">
           <span className="material-symbols-outlined text-5xl text-outline mb-3" style={{ fontVariationSettings: "'FILL' 1" }}>
             {filter === "ALL" ? "event_busy" : filter === "PENDING" ? "hourglass_empty" : "check"}
           </span>
@@ -156,7 +156,7 @@ export default function StatusPage() {
             return (
               <div
                 key={leave._id}
-                className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white rounded-lg border border-outline-variant overflow-hidden"
               >
                 {/* Header bar */}
                 <div className={`px-5 py-3 flex items-center justify-between border-b border-outline-variant ${config.bg}`}>

@@ -68,7 +68,7 @@ export default function EmployeeDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Total Requests</p>
@@ -79,7 +79,7 @@ export default function EmployeeDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Pending</p>
@@ -90,7 +90,7 @@ export default function EmployeeDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Approved</p>
@@ -106,7 +106,7 @@ export default function EmployeeDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {quickActions.map((action) => (
           <button key={action.href} onClick={() => router.push(action.href)}
-            className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm hover:shadow-md hover:border-primary-fixed-dim transition-all text-left active:scale-[0.98]">
+            className="bg-white rounded-lg border border-outline-variant p-5 hover:border-primary-fixed-dim transition-all text-left">
             <div className={`w-10 h-10 rounded-full ${action.color} flex items-center justify-center mb-3`}>
               <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>{action.icon}</span>
             </div>
@@ -116,7 +116,7 @@ export default function EmployeeDashboard() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm">
+      <div className="bg-white rounded-lg border border-outline-variant">
         <div className="px-6 py-4 border-b border-outline-variant">
           <h2 className="text-lg font-semibold text-on-surface">Recent Leave Requests</h2>
         </div>

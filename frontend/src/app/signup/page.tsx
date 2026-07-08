@@ -72,7 +72,7 @@ export default function SignupPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-8 text-center">
+          <div className="bg-white rounded-lg border border-outline-variant p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-primary-fixed flex items-center justify-center mx-auto mb-4">
               <span className="material-symbols-outlined text-primary text-[32px]" style={{ fontVariationSettings: "'FILL' 1" }}>
                 check_circle
@@ -89,7 +89,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-xl shadow-sm border border-outline-variant p-8">
+        <div className="bg-white rounded-lg border border-outline-variant p-8">
           {/* Header */}
           <div className="mb-8 text-center">
             <Link href="/" className="inline-flex items-center gap-3 mb-2">

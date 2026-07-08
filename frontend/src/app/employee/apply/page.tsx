@@ -212,7 +212,7 @@ export default function ApplyLeavePage() {
       )}
 
       <form onSubmit={handleSubmit}>
-        <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+        <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
           {/* Header */}
           <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
             <h2 className="text-lg font-semibold text-on-surface">Leave Details</h2>
@@ -402,7 +402,7 @@ export default function ApplyLeavePage() {
       </form>
 
       {/* Leave balance summary */}
-      <div className="mt-6 bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="mt-6 bg-white rounded-lg border border-outline-variant overflow-hidden">
         <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
           <h2 className="text-lg font-semibold text-on-surface">Your Leave Balances</h2>
         </div>

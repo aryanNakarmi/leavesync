@@ -23,6 +23,7 @@ interface LeaveRequest {
   user: {
     name: string;
     email: string;
+    profilePicture?: string;
   };
 }
 
@@ -174,26 +175,26 @@ export default function LeaveRequestsPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-4">
           <p className="text-xs text-on-surface-variant font-medium">Total</p>
           <p className="text-2xl font-bold text-on-surface mt-1">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-4">
           <p className="text-xs text-on-surface-variant font-medium">Pending</p>
           <p className="text-2xl font-bold text-amber-600 mt-1">{stats.pending}</p>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-4">
           <p className="text-xs text-on-surface-variant font-medium">Approved</p>
           <p className="text-2xl font-bold text-green-600 mt-1">{stats.approved}</p>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-4">
           <p className="text-xs text-on-surface-variant font-medium">Rejected</p>
           <p className="text-2xl font-bold text-red-600 mt-1">{stats.rejected}</p>
         </div>
       </div>
 
       {/* Main card */}
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
         {/* Tabs */}
         <div className="flex border-b border-outline-variant overflow-x-auto">
           {tabs.map((tab) => {
@@ -271,14 +272,22 @@ export default function LeaveRequestsPage() {
                       {/* Employee */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                            {leave.user.name
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2) || "U"}
-                          </div>
+                          {leave.user.profilePicture ? (
+                            <img
+                              src={leave.user.profilePicture}
+                              alt={leave.user.name}
+                              className="w-8 h-8 rounded-full object-cover shrink-0 border border-outline-variant"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                              {leave.user.name
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("")
+                                .toUpperCase()
+                                .slice(0, 2) || "U"}
+                            </div>
+                          )}
                           <div>
                             <p className="text-sm font-medium text-on-surface">{leave.user.name}</p>
                             <p className="text-xs text-on-surface-variant">{leave.user.email}</p>
@@ -363,10 +372,10 @@ export default function LeaveRequestsPage() {
       {modal.open && modal.request && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={closeModal} />
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} />
 
           {/* Modal */}
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-md">
+          <div className="relative bg-white rounded-lg border border-outline-variant w-full max-w-md">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">

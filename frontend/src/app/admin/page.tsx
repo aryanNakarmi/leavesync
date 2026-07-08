@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-white rounded-lg border border-outline-variant p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Total Requests</p>
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-amber-50/50 rounded-lg border border-amber-200 p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Pending</p>
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-green-50/50 rounded-lg border border-green-200 p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Approved</p>
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+        <div className="bg-red-50/50 rounded-lg border border-red-200 p-5">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-on-surface-variant font-medium">Rejected</p>
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {quickActions.map((action) => (
           <button key={action.href} onClick={() => router.push(action.href)}
-            className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm hover:shadow-md hover:border-primary-fixed-dim transition-all text-left active:scale-[0.98]">
+            className="bg-white rounded-lg border border-outline-variant p-5 hover:border-primary-fixed-dim transition-all text-left">
             <div className={`w-10 h-10 rounded-full ${action.color} flex items-center justify-center mb-3`}>
               <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>{action.icon}</span>
             </div>
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm">
+      <div className="bg-white rounded-lg border border-outline-variant">
         <div className="px-6 py-4 border-b border-outline-variant">
           <h2 className="text-lg font-semibold text-on-surface">All Leave Requests</h2>
         </div>
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-outline-variant">
                 {allLeaves.slice(0, 5).map((leave: any) => (
                   <tr key={leave._id} className="hover:bg-surface-container-low transition-colors">
-                    <td className="px-6 py-4 text-sm text-on-surface font-medium">{leave.userId?.slice(-6) || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-on-surface font-medium">{leave.user?.name || leave.userId?.slice(-6) || "N/A"}</td>
                     <td className="px-6 py-4 text-sm text-on-surface">
                       {leave.startDate ? format(new Date(leave.startDate), "MMM d") : "..."} -{" "}
                       {leave.endDate ? format(new Date(leave.endDate), "MMM d, yyyy") : "..."}

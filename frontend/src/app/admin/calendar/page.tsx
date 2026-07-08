@@ -338,7 +338,7 @@ export default function AdminCalendarPage() {
     <div className="max-w-7xl mx-auto">
       {/* Toast */}
       {toast.show && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 border ${
+        <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 border ${
           toast.type === "success"
             ? "bg-green-50 border-green-200"
             : "bg-error-container border-error/20"
@@ -374,7 +374,7 @@ export default function AdminCalendarPage() {
 
       {/* Stats bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-blue-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>beach_access</span>
           </div>
@@ -383,7 +383,7 @@ export default function AdminCalendarPage() {
             <p className="text-xl font-bold text-on-surface mt-0.5">{monthStats.totalLeaveDays}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-green-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
           </div>
@@ -392,7 +392,7 @@ export default function AdminCalendarPage() {
             <p className="text-xl font-bold text-on-surface mt-0.5">{monthStats.employeesOnLeave}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-purple-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
           </div>
@@ -404,7 +404,7 @@ export default function AdminCalendarPage() {
       </div>
 
       {/* Calendar card */}
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
         {/* Calendar header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
           <div className="flex items-center gap-3">
@@ -525,8 +525,8 @@ export default function AdminCalendarPage() {
       {/* ─── MANAGE HOLIDAYS MODAL ──────────────────────────────────────── */}
       {showHolidayModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowHolidayModal(false)} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-2xl max-h-[80vh] flex flex-col">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowHolidayModal(false)} />
+          <div className="relative bg-white rounded-lg border border-outline-variant w-full max-w-2xl max-h-[80vh] flex flex-col">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
@@ -561,12 +561,12 @@ export default function AdminCalendarPage() {
       {/* ─── ADD / EDIT HOLIDAY MODAL ───────────────────────────────────── */}
       {showAddHolidayModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => {
+          <div className="absolute inset-0 bg-black/40" onClick={() => {
             setShowAddHolidayModal(false);
             setEditingHoliday(null);
             setHolidayForm(emptyHolidayForm);
           }} />
-          <div className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-md">
+          <div className="relative bg-white rounded-lg border border-outline-variant w-full max-w-md">
             <div className="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center">
@@ -711,9 +711,9 @@ function DayDetailPopover({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40" />
       <div
-        className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm"
+        className="relative bg-white rounded-lg border border-outline-variant w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b border-outline-variant flex items-center justify-between">

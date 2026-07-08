@@ -202,7 +202,7 @@ export default function EmployeeCalendarPage() {
 
       {/* Stats bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-blue-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>beach_access</span>
           </div>
@@ -211,7 +211,7 @@ export default function EmployeeCalendarPage() {
             <p className="text-xl font-bold text-on-surface mt-0.5">{monthStats.leaveDaysInMonth}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-green-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>pending_actions</span>
           </div>
@@ -220,7 +220,7 @@ export default function EmployeeCalendarPage() {
             <p className="text-xl font-bold text-on-surface mt-0.5">{monthStats.leaveCountInMonth}</p>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-outline-variant p-4 shadow-sm flex items-center gap-4">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-purple-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
           </div>
@@ -232,7 +232,7 @@ export default function EmployeeCalendarPage() {
       </div>
 
       {/* Calendar card */}
-      <div className="bg-white rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
         {/* Calendar header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-outline-variant">
           <div className="flex items-center gap-3">
@@ -389,9 +389,9 @@ function EmployeeDayPopover({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/40" />
       <div
-        className="relative bg-white rounded-xl shadow-xl border border-outline-variant w-full max-w-sm"
+        className="relative bg-white rounded-lg border border-outline-variant w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b border-outline-variant flex items-center justify-between">
