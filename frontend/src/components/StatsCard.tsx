@@ -18,7 +18,7 @@ export default function StatsCard({
   valueColor = "text-on-surface",
 }: StatsCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-outline-variant p-5 shadow-sm">
+    <div className="bg-white rounded-lg border border-outline-variant p-5">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-on-surface-variant font-medium">{label}</p>
