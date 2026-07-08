@@ -14,9 +14,10 @@ interface SidebarProps {
   role: string;
   userName?: string | null;
   userInitials: string;
+  profilePicture?: string | null;
 }
 
-export default function Sidebar({ navItems, role, userName, userInitials }: SidebarProps) {
+export default function Sidebar({ navItems, role, userName, userInitials, profilePicture }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -38,7 +39,7 @@ export default function Sidebar({ navItems, role, userName, userInitials }: Side
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all active:scale-[0.98] ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
                 isActive
                   ? "bg-primary-fixed text-primary font-semibold border-r-4 border-primary"
                   : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
@@ -59,9 +60,17 @@ export default function Sidebar({ navItems, role, userName, userInitials }: Side
       {/* User profile */}
       <div className="pt-4 border-t border-outline-variant">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-sm font-bold">
-            {userInitials}
-          </div>
+          {profilePicture ? (
+            <img
+              src={profilePicture}
+              alt={userName || "User"}
+              className="w-9 h-9 rounded-full object-cover border border-outline-variant"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-sm font-bold">
+              {userInitials}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-on-surface truncate">{userName}</p>
             <p className="text-[10px] text-on-surface-variant truncate">{role}</p>
