@@ -117,7 +117,7 @@ export async function getAllLeaves(req: AuthRequest, res: Response) {
       getActiveLeaveTypes()
     ]);
 
-    const userMap = new Map(users.map((u: any) => [u._id.toString(), { name: u.name, email: u.email }]));
+    const userMap = new Map(users.map((u: any) => [u._id.toString(), { name: u.name, email: u.email, profilePicture: u.profilePicture || "" }]));
     const typeMap = new Map(leaveTypes.map((t: any) => [t._id.toString(), t.name]));
 
     const enriched = requests.map((r: any) => ({
