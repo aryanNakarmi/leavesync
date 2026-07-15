@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware, adminOnly } from "../middleware/auth";
-import { login, register, getProfile } from "../controllers/auth.controller";
+import { login, register, getProfile, updateProfile } from "../controllers/auth.controller";
 import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves, getMyLeaveBalance } from "../controllers/leave.controller";
 import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";
 
@@ -24,6 +24,7 @@ const router = Router();
 router.post("/login", login);
 router.post("/register", register);
 router.get("/profile", authMiddleware, getProfile);
+router.patch("/profile", authMiddleware, updateProfile);
 
 // Leave routes  
 router.post("/leaves", authMiddleware, createLeave);
