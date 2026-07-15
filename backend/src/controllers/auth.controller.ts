@@ -1,7 +1,7 @@
 import { Response } from "express";
 import jwt from "jsonwebtoken";
 import { AuthRequest } from "../middleware/auth";
-import { getUserByEmail, getUserById, verifyPassword, createUser, setLeaveBalance } from "../repositories/user.repo";
+import { getUserByEmail, getUserById, verifyPassword, createUser, updateUser, setLeaveBalance } from "../repositories/user.repo";
 import { getActiveLeaveTypes } from "../repositories/leaveType.repo";
 
 export async function register(req: AuthRequest, res: Response) {
@@ -117,5 +117,47 @@ export async function getProfile(req: AuthRequest, res: Response) {
     res.json(safe);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch profile" });
+  }
+}
+
+export async function updateProfile(req: AuthRequest, res: Response) {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const { name, phone, address, profilePicture, password } = req.body;
+
+  try {
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Build updates object — only include fields that were actually provided
+    const updates: any = {};
+    if (name?.trim()) updates.name = name.trim();
+    if (phone !== undefined) updates.phone = phone;
+    if (address !== undefined) updates.address = address;
+    if (profilePicture !== undefined) updates.profilePicture = profilePicture;
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({ error: "Password must be at least 6 characters" });
+      }
+      updates.password = password;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    await updateUser(userId, updates);
+
+    // Return updated user (without password)
+    const updated = await getUserById(userId);
+    const { password: _, ...safe } = updated as any;
+    res.json(safe);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update profile" });
   }
 }
