@@ -2,7 +2,7 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { createLeaveRequest, getLeaveRequestsByUser, updateLeaveRequest, getOverlappingLeaves, getLeaveRequestById, getAllLeaveRequests } from "../repositories/leave.repo";
 import { getActiveLeaveTypes } from "../repositories/leaveType.repo";
-import { getLeaveBalance } from "../repositories/leaveBalance.repo";
+import { getLeaveBalance, upsertLeaveBalance } from "../repositories/leaveBalance.repo";
 import { getAllUsers } from "../repositories/user.repo";
 
 export async function createLeave(req: AuthRequest, res: Response) {
@@ -22,13 +22,21 @@ export async function createLeave(req: AuthRequest, res: Response) {
     // Calculate days
     const totalDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-    // Check leave balance
+    // Check leave balance — dynamically calculate used from approved leaves
     const currentYear = new Date().getFullYear();
+    const allUserLeaves = await getLeaveRequestsByUser(userId!);
+    const approvedLeaves = allUserLeaves.filter((l: any) =>
+      l.status === "APPROVED" &&
+      l.leaveTypeId === leaveTypeId &&
+      new Date(l.startDate).getFullYear() === currentYear
+    );
+    const actualUsed = approvedLeaves.reduce((sum: number, l: any) => sum + (l.totalDays || 0), 0);
+
     const balances = await getLeaveBalance(userId!, currentYear);
     const typeBalance = balances.find((b: any) => b.leaveTypeId === leaveTypeId);
 
     if (typeBalance) {
-      const remaining = (typeBalance.allocated + typeBalance.carriedOver) - typeBalance.used;
+      const remaining = (typeBalance.allocated + typeBalance.carriedOver) - actualUsed;
       if (totalDays > remaining) {
         return res.status(422).json({
           error: `Insufficient balance. You have ${remaining} day${remaining === 1 ? "" : "s"} remaining for this leave type.`
@@ -82,10 +90,51 @@ export async function approveLeave(req: AuthRequest, res: Response) {
   const { adminComment } = req.body;
 
   try {
+    // Fetch the leave request to get leaveTypeId and totalDays
+    const leaveRequest = await getLeaveRequestById(id);
+    if (!leaveRequest) {
+      return res.status(404).json({ error: "Leave request not found" });
+    }
+
+    // Mark leave as APPROVED first
     await updateLeaveRequest(id, {
       status: "APPROVED",
       adminComment
     });
+
+    // Then update the stored balance (redundant with dynamic calc but useful as fallback)
+    const currentYear = new Date().getFullYear();
+    const userId = leaveRequest.userId;
+    const leaveTypeId = leaveRequest.leaveTypeId;
+    const totalDays = leaveRequest.totalDays;
+
+    try {
+      // Recalculate total used from actual approved leaves to stay accurate
+      const allUserLeaves = await getLeaveRequestsByUser(userId);
+      const approvedThisYear = allUserLeaves.filter((l: any) =>
+        l.status === "APPROVED" &&
+        l.leaveTypeId === leaveTypeId &&
+        new Date(l.startDate).getFullYear() === currentYear
+      );
+      const actualUsed = approvedThisYear.reduce((sum: number, l: any) => sum + (l.totalDays || 0), 0);
+
+      const balances = await getLeaveBalance(userId, currentYear);
+      const typeBalance = balances.find((b: any) => b.leaveTypeId === leaveTypeId);
+
+      if (typeBalance) {
+        await upsertLeaveBalance({
+          userId,
+          leaveTypeId,
+          year: currentYear,
+          allocated: typeBalance.allocated,
+          used: actualUsed,
+          carriedOver: typeBalance.carriedOver || 0
+        });
+      }
+    } catch (balanceError) {
+      console.error("Failed to update leave balance:", balanceError);
+      // Continue — the dynamic calculation in getMyLeaveBalance will correct it
+    }
 
     res.json({ status: "APPROVED" });
   } catch (error) {
@@ -145,8 +194,34 @@ export async function getAllLeaveTypes(req: AuthRequest, res: Response) {
 export async function getMyLeaveBalance(req: AuthRequest, res: Response) {
   try {
     const currentYear = new Date().getFullYear();
-    const balance = await getLeaveBalance(req.user?.id || "", currentYear);
-    res.json(balance);
+    const userId = req.user?.id || "";
+
+    // Get stored balances
+    const balances = await getLeaveBalance(userId, currentYear);
+
+    // Calculate actual used days from approved leaves for the current year
+    // Use startDate year (not createdAt year) so leaves count against the year they're taken in
+    const allLeaves = await getLeaveRequestsByUser(userId);
+    const approvedLeavesThisYear = allLeaves.filter((l: any) =>
+      l.status === "APPROVED" &&
+      new Date(l.startDate).getFullYear() === currentYear
+    );
+
+    // Sum totalDays by leave type
+    const usedByType = new Map<string, number>();
+    for (const leave of approvedLeavesThisYear) {
+      const key = leave.leaveTypeId;
+      usedByType.set(key, (usedByType.get(key) || 0) + leave.totalDays);
+    }
+
+    // Override stored `used` with the dynamically calculated value
+    const correctedBalances = balances.map((b: any) => ({
+      ...b,
+      _id: b._id.toString(),
+      used: usedByType.get(b.leaveTypeId) || 0
+    }));
+
+    res.json(correctedBalances);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch leave balance" });
   }
