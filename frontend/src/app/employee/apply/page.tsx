@@ -154,6 +154,9 @@ export default function ApplyLeavePage() {
       setSubmitting(false);
       setToast({ type: "success", message: `Leave request submitted! ${totalDays} day${totalDays > 1 ? "s" : ""} of ${selectedType?.name || "leave"} sent for approval.` });
 
+      // Refresh balances to reflect any changes
+      await fetchData();
+
       // Dismiss toast and reset form after 4 seconds
       setTimeout(() => {
         setToast(null);
@@ -219,58 +222,59 @@ export default function ApplyLeavePage() {
           </div>
 
           <div className="p-6 space-y-6">
-            {/* Leave Type Selection */}
+            {/* Leave Type Selection - Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-on-surface mb-3">
+              <label className="block text-sm font-medium text-on-surface mb-2">
                 Leave Type
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {leaveTypes.map((type) => {
-                  const bal = balances.find((b) => b.leaveTypeId === type._id);
-                  const remaining = bal
-                    ? bal.allocated + bal.carriedOver - bal.used
-                    : 0;
-                  const isSelected = selectedTypeId === type._id;
-
-                  return (
-                    <button
-                      key={type._id}
-                      type="button"
-                      onClick={() => setSelectedTypeId(type._id)}
-                      className={`relative p-4 rounded-lg border-2 text-left transition-all active:scale-[0.98] ${
-                        isSelected
-                          ? "border-primary bg-primary-fixed/30 shadow-sm"
-                          : "border-outline-variant hover:border-primary-fixed-dim hover:bg-surface-container-low"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <span
-                          className={`text-sm font-semibold ${
-                            isSelected ? "text-primary" : "text-on-surface"
-                          }`}
-                        >
-                          {type.name}
-                        </span>
-                        {type.isPaid && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
-                            Paid
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-on-surface-variant">
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">local_parking</span>
-                          {remaining} left
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">event</span>
-                          {bal ? bal.used : 0} used
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="relative">
+                <select
+                  value={selectedTypeId}
+                  onChange={(e) => setSelectedTypeId(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm text-on-surface appearance-none cursor-pointer pr-10"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%236b7280'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 10px center",
+                  }}
+                >
+                  {leaveTypes.map((type) => {
+                    const bal = balances.find((b) => b.leaveTypeId === type._id);
+                    const remaining = bal
+                      ? bal.allocated + bal.carriedOver - bal.used
+                      : 0;
+                    return (
+                      <option key={type._id} value={type._id}>
+                        {type.name} — {remaining} days remaining
+                      </option>
+                    );
+                  })}
+                </select>
               </div>
+
+              {/* Selected type info */}
+              {selectedType && selectedBalance && (
+                <div className="mt-3 flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-1.5 text-on-surface-variant">
+                    <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>local_parking</span>
+                    <span><strong className="text-on-surface">{remainingBalance}</strong> remaining</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-on-surface-variant">
+                    <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>event</span>
+                    <span><strong className="text-on-surface">{selectedBalance.used}</strong> used</span>
+                  </div>
+                  {selectedType.isPaid && (
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                      Paid
+                    </span>
+                  )}
+                  {selectedType.maxCarryover > 0 && (
+                    <span className="text-[11px] text-on-surface-variant">
+                      Up to {selectedType.maxCarryover} days carryover
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Date Range */}
