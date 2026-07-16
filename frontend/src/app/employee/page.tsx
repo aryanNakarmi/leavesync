@@ -4,19 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 
-interface ProfileData {
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  profilePicture?: string;
-  department?: string;
-  jobTitle?: string;
-  role: string;
-  createdAt: string;
-  joinDate?: string;
-}
-
 interface LeaveBalance {
   _id: string;
   leaveTypeId: string;
@@ -50,7 +37,6 @@ export default function EmployeeDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [balances, setBalances] = useState<LeaveBalance[]>([]);
   const [leaveTypes, setLeaveTypes] = useState<LeaveType[]>([]);
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
@@ -69,10 +55,7 @@ export default function EmployeeDashboard() {
     if (!token) return;
 
     try {
-      const [profileRes, balanceRes, leavesRes, typesRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
+      const [balanceRes, leavesRes, typesRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/leave-balance`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
@@ -84,7 +67,6 @@ export default function EmployeeDashboard() {
         })
       ]);
 
-      if (profileRes.ok) setProfile(await profileRes.json());
       if (balanceRes.ok) {
         const data = await balanceRes.json();
         setBalances(Array.isArray(data) ? data : []);
@@ -131,13 +113,6 @@ export default function EmployeeDashboard() {
     .filter((r) => r.status === "PENDING")
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] || null;
 
-  const initials = profile?.name
-    ?.split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2) || "U";
-
   const statusColors: Record<string, string> = {
     PENDING: "bg-amber-50 text-amber-700 border border-amber-200",
     APPROVED: "bg-green-50 text-green-700 border border-green-200",
@@ -154,71 +129,7 @@ export default function EmployeeDashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
 
-      {/* ─── Profile Banner ─── */}
-      <div className="bg-white rounded-xl border border-outline-variant">
-        {/* Banner gradient */}
-        <div className="h-24 bg-gradient-to-r from-primary to-primary-fixed-dim relative rounded-t-xl overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)]" />
-        </div>
-
-        <div className="px-6 pb-6">
-          {/* Avatar overlapping banner */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 mb-4">
-            {profile?.profilePicture ? (
-              <img
-                src={profile.profilePicture}
-                alt={profile.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-primary-fixed border-4 border-white shadow-md flex items-center justify-center text-primary text-3xl font-bold">
-                {initials}
-              </div>
-            )}
-            <div className="sm:pb-1 flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-on-surface truncate">{profile?.name || "User"}</h1>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
-                {profile?.jobTitle && (
-                  <span className="text-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">work</span>
-                    {profile.jobTitle}
-                  </span>
-                )}
-                {profile?.department && (
-                  <span className="text-sm text-on-surface-variant flex items-center gap-1">
-                    <span className="material-symbols-outlined text-[14px]">business</span>
-                    {profile.department}
-                  </span>
-                )}
-              </div>
-            </div>
-            {/* Quick action: go to settings */}
-            <button
-              onClick={() => router.push("/employee/settings")}
-              className="hidden sm:flex items-center gap-1.5 px-4 py-2 border border-outline-variant rounded-lg text-sm text-on-surface-variant hover:bg-surface-container-low transition-colors"
-            >
-              <span className="material-symbols-outlined text-base">edit</span>
-              Edit Profile
-            </button>
-          </div>
-
-          {/* Contact details */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center gap-2.5 text-sm text-on-surface-variant">
-              <span className="material-symbols-outlined text-base text-outline">mail</span>
-              <span className="truncate">{profile?.email || "—"}</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-sm text-on-surface-variant">
-              <span className="material-symbols-outlined text-base text-outline">call</span>
-              <span>{profile?.phone || "—"}</span>
-            </div>
-            <div className="flex items-center gap-2.5 text-sm text-on-surface-variant">
-              <span className="material-symbols-outlined text-base text-outline">calendar_month</span>
-              <span>Joined {profile?.createdAt ? format(new Date(profile.createdAt), "MMM yyyy") : "—"}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       {/* ─── Quick Stats Row ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
