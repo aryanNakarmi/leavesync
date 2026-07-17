@@ -129,7 +129,11 @@ export default function EmployeeDashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
 
-      
+      {/* ─── Page Header ─── */}
+      <div>
+        <h1 className="text-2xl font-bold text-on-surface">Dashboard</h1>
+        <p className="text-on-surface-variant mt-1">Overview of your leave activity</p>
+      </div>
 
       {/* ─── Quick Stats Row ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -206,7 +210,7 @@ export default function EmployeeDashboard() {
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {balances.map((bal) => {
+              {balances.filter((bal) => (bal.allocated || 0) > 0).map((bal) => {
                 const type = leaveTypes.find((t) => t._id === bal.leaveTypeId);
                 if (!type) return null;
                 const remaining = bal.allocated + bal.carriedOver - bal.used;

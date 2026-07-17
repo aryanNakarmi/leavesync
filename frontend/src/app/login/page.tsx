@@ -121,14 +121,6 @@ function LoginForm() {
               Create one
             </Link>
           </p>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-primary-fixed/50 rounded-lg border border-primary-fixed-dim/50">
-            <p className="text-xs font-medium text-on-primary-fixed mb-2">Demo Credentials:</p>
-            <p className="text-xs text-on-primary-fixed-variant">Admin: admin@leavesync.com</p>
-            <p className="text-xs text-on-primary-fixed-variant">User: alice@leavesync.com</p>
-            <p className="text-xs text-on-primary-fixed-variant">Password: password123</p>
-          </div>
         </div>        </div>
     </div>
   );
