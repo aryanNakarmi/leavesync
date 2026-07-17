@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authMiddleware, adminOnly } from "../middleware/auth";
 import { login, register, getProfile, updateProfile } from "../controllers/auth.controller";
-import { createLeave, getMyLeaves, approveLeave, rejectLeave, getAllLeaves, getMyLeaveBalance } from "../controllers/leave.controller";
+import { createLeave, getMyLeaves, approveLeave, rejectLeave, cancelLeave, getAllLeaves, getMyLeaveBalance } from "../controllers/leave.controller";
 import { getAllEmployees, getEmployeeDetail, createEmployee, updateEmployee, removeEmployee, updateEmployeeLeaveBalances } from "../controllers/user.controller";
 
 import {
@@ -32,6 +32,7 @@ router.get("/leaves/my", authMiddleware, getMyLeaves);
 router.get("/leaves", authMiddleware, adminOnly, getAllLeaves);
 router.patch("/leaves/:id/approve", authMiddleware, adminOnly, approveLeave);
 router.patch("/leaves/:id/reject", authMiddleware, adminOnly, rejectLeave);
+router.patch("/leaves/:id/cancel", authMiddleware, cancelLeave);
 
 // Leave types & balance
 router.get("/leave-types/active", authMiddleware, getActiveLeaveTypesHandler);

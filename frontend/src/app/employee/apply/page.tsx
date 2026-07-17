@@ -35,6 +35,18 @@ export default function ApplyLeavePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState<{ type: "submitting" | "success"; message: string } | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Escape key to close confirmation dialog
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowConfirm(false);
+    }
+    if (showConfirm) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [showConfirm]);
 
   // Form state
   const [selectedTypeId, setSelectedTypeId] = useState("");
@@ -108,22 +120,27 @@ export default function ApplyLeavePage() {
 
   const minEndDate = startDate || undefined;
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
     setError("");
 
     if (!selectedTypeId || !startDate || !endDate || !reason.trim()) {
       setError("Please fill in all fields");
-      setSubmitting(false);
       return;
     }
 
     if (exceedsBalance) {
       setError("You don't have enough leave balance for this request");
-      setSubmitting(false);
       return;
     }
+
+    setShowConfirm(true);
+  }
+
+  async function handleSubmit() {
+    setShowConfirm(false);
+    setSubmitting(true);
+    setError("");
 
     try {
       setToast({ type: "submitting", message: "Submitting your leave request..." });
@@ -214,7 +231,7 @@ export default function ApplyLeavePage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleFormSubmit}>
         <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">
           {/* Header */}
           <div className="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
@@ -404,6 +421,73 @@ export default function ApplyLeavePage() {
           </div>
         </div>
       </form>
+
+      {/* Confirmation Dialog */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowConfirm(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative bg-white rounded-lg border border-outline-variant w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center">
+                <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>description</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-on-surface">Confirm Leave Request</h3>
+                <p className="text-sm text-on-surface-variant">Please review the details before submitting.</p>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-low rounded-lg p-4 space-y-2 mb-5 border border-outline-variant">
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Leave Type</span>
+                <span className="font-medium text-on-surface">{selectedType?.name || "—"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Start Date</span>
+                <span className="font-medium text-on-surface">{startDate ? format(new Date(startDate), "MMM d, yyyy") : "—"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">End Date</span>
+                <span className="font-medium text-on-surface">{endDate ? format(new Date(endDate), "MMM d, yyyy") : "—"}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-on-surface-variant">Total Days</span>
+                <span className="font-medium text-primary">{totalDays} day{totalDays > 1 ? "s" : ""}</span>
+              </div>
+              {reason.trim() && (
+                <div className="pt-2 border-t border-outline-variant">
+                  <span className="text-xs text-on-surface-variant block mb-1">Reason</span>
+                  <p className="text-sm text-on-surface">{reason.trim()}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirm(false)}
+                disabled={submitting}
+                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="px-5 py-2 rounded-lg text-sm font-medium text-on-primary bg-primary hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2 active:scale-[0.97]"
+              >
+                {submitting ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting...</>
+                ) : (
+                  <><span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>send</span> Confirm & Submit</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Leave balance summary */}
       <div className="mt-6 bg-white rounded-lg border border-outline-variant overflow-hidden">

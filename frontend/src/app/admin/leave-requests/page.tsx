@@ -58,6 +58,15 @@ export default function LeaveRequestsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>({ show: false, type: "success", message: "" });
 
+  // Escape key to close modal
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && modal.open) closeModal();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [modal.open]);
+
   useEffect(() => {
     if (authStatus === "unauthenticated") router.push("/login");
   }, [authStatus, router]);

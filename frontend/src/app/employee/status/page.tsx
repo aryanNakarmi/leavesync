@@ -24,6 +24,7 @@ const statusConfig: Record<string, { bg: string; text: string; border: string; d
   PENDING: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500", label: "Pending", icon: "hourglass_empty" },
   APPROVED: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", dot: "bg-green-500", label: "Approved", icon: "check_circle" },
   REJECTED: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200", dot: "bg-red-500", label: "Rejected", icon: "cancel" },
+  CANCELLED: { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-300", dot: "bg-gray-400", label: "Cancelled", icon: "undo" },
 };
 
 const tabs: { key: FilterTab; label: string }[] = [
@@ -32,6 +33,95 @@ const tabs: { key: FilterTab; label: string }[] = [
   { key: "APPROVED", label: "Approved" },
   { key: "REJECTED", label: "Rejected" },
 ];
+
+// ─── Withdraw Button ─────────────────────────────────────────────────────────
+
+function WithdrawButton({ leaveId, onWithdrawn }: { leaveId: string; onWithdrawn: () => void }) {
+  const { data: session } = useSession();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
+
+  // Escape key to close confirm dialog
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setConfirmOpen(false);
+    }
+    if (confirmOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      return () => document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [confirmOpen]);
+
+  async function handleWithdraw() {
+    setWithdrawing(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leaves/${leaveId}/cancel`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${(session as any)?.token}` }
+      });
+      if (res.ok) {
+        setConfirmOpen(false);
+        onWithdrawn();
+      }
+    } catch { /* ignore */ }
+    setWithdrawing(false);
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setConfirmOpen(true)}
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium border border-error/30 text-error hover:bg-error-container/50 transition-all active:scale-[0.95]"
+        title="Withdraw this leave request"
+      >
+        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>undo</span>
+        Withdraw
+      </button>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setConfirmOpen(false)}>
+          <div className="absolute inset-0 bg-black/40" />
+          <div
+            className="relative bg-white rounded-lg border border-outline-variant w-full max-w-sm p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-error-container flex items-center justify-center">
+                <span className="material-symbols-outlined text-error text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>help</span>
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-on-surface">Withdraw Request?</h3>
+                <p className="text-sm text-on-surface-variant">This action cannot be undone.</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                disabled={withdrawing}
+                className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                Keep it
+              </button>
+              <button
+                onClick={handleWithdraw}
+                disabled={withdrawing}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-on-primary bg-error hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                {withdrawing ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Withdrawing...</>
+                ) : (
+                  'Yes, withdraw'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function StatusPage() {
   const { data: session, status: authStatus } = useSession();
@@ -191,13 +281,16 @@ export default function StatusPage() {
                   <th className="px-5 py-3.5 text-center text-xs font-medium text-on-surface-variant uppercase tracking-wider">Status</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-on-surface-variant uppercase tracking-wider">Admin Response</th>
                   <th className="px-5 py-3.5 text-right text-xs font-medium text-on-surface-variant uppercase tracking-wider">Submitted</th>
+                  <th className="px-5 py-3.5 text-center text-xs font-medium text-on-surface-variant uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant">
                 {filtered.map((leave) => {
-                  const config = statusConfig[leave.status];
+                  const isCancelled = leave.status === "REJECTED" && leave.adminComment === "Cancelled by employee";
+                  const effectiveStatus = isCancelled ? "CANCELLED" : leave.status;
+                  const config = statusConfig[effectiveStatus] || statusConfig[leave.status];
                   const isExpanded = expandedId === leave._id;
-                  const hasAdminComment = !!leave.adminComment;
+                  const hasAdminComment = !!leave.adminComment && !isCancelled;
 
                   return (
                     <tr key={leave._id} className="transition-colors">
@@ -241,7 +334,9 @@ export default function StatusPage() {
 
                       {/* Admin Response */}
                       <td className="px-5 py-4">
-                        {leave.adminComment ? (
+                        {isCancelled ? (
+                          <span className="text-xs text-on-surface-variant/40 italic">Withdrawn</span>
+                        ) : leave.adminComment ? (
                           <div className="flex items-center gap-2 max-w-[200px]">
                             <span
                               className={`material-symbols-outlined text-base shrink-0 ${config.text}`}
@@ -267,6 +362,13 @@ export default function StatusPage() {
                           {format(new Date(leave.createdAt), "MMM d, yyyy")}
                         </span>
                       </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-4 text-center">
+                        {leave.status === "PENDING" && (
+                          <WithdrawButton leaveId={leave._id} onWithdrawn={fetchLeaves} />
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -280,7 +382,9 @@ export default function StatusPage() {
               {(() => {
                 const leave = leaves.find(l => l._id === expandedId);
                 if (!leave) return null;
-                const config = statusConfig[leave.status];
+                const isCancelled = leave.status === "REJECTED" && leave.adminComment === "Cancelled by employee";
+                const effectiveStatus = isCancelled ? "CANCELLED" : leave.status;
+                const config = statusConfig[effectiveStatus];
 
                 return (
                   <div className="p-5 space-y-4">
@@ -292,8 +396,8 @@ export default function StatusPage() {
                       </p>
                     </div>
 
-                    {/* Admin comment */}
-                    {leave.adminComment && (
+                    {/* Admin comment — only show if it's not a self-cancellation */}
+                    {leave.adminComment && !isCancelled && (
                       <div>
                         <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider mb-1.5">Admin Response</p>
                         <div className={`flex items-start gap-3 p-3 rounded-lg border ${config.border} ${config.bg}`}>

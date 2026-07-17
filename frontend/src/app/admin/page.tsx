@@ -153,7 +153,7 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-outline-variant">
                 {allLeaves.slice(0, 5).map((leave: any) => (
                   <tr key={leave._id} className="hover:bg-surface-container-low transition-colors">
-                    <td className="px-6 py-4 text-sm text-on-surface font-medium">{leave.user?.name || leave.userId?.slice(-6) || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-on-surface font-medium">{leave.user?.name || "Unknown Employee"}</td>
                     <td className="px-6 py-4 text-sm text-on-surface">
                       {leave.startDate ? format(new Date(leave.startDate), "MMM d") : "..."} -{" "}
                       {leave.endDate ? format(new Date(leave.endDate), "MMM d, yyyy") : "..."}
