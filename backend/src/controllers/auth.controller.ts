@@ -75,7 +75,9 @@ export async function login(req: AuthRequest, res: Response) {
   try {
     const user = await getUserByEmail(email);
     
-    if (!user || !user.isActive) {
+    // Allow login if user exists and isActive is not explicitly false
+    // (handles old accounts created before isActive field was added)
+    if (!user || user.isActive === false) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 

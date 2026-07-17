@@ -158,6 +158,37 @@ export async function rejectLeave(req: AuthRequest, res: Response) {
   }
 }
 
+export async function cancelLeave(req: AuthRequest, res: Response) {
+  const { id } = req.params;
+  const userId = req.user?.id;
+
+  try {
+    const leaveRequest = await getLeaveRequestById(id);
+    if (!leaveRequest) {
+      return res.status(404).json({ error: "Leave request not found" });
+    }
+
+    // Only the owner of the leave can cancel
+    if (leaveRequest.userId !== userId) {
+      return res.status(403).json({ error: "You can only cancel your own leave requests" });
+    }
+
+    // Only PENDING leaves can be cancelled
+    if (leaveRequest.status !== "PENDING") {
+      return res.status(422).json({ error: "Only pending leave requests can be cancelled" });
+    }
+
+    await updateLeaveRequest(id, {
+      status: "REJECTED",
+      adminComment: "Cancelled by employee"
+    });
+
+    res.json({ status: "REJECTED" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to cancel leave request" });
+  }
+}
+
 export async function getAllLeaves(req: AuthRequest, res: Response) {
   try {
     const [requests, users, leaveTypes] = await Promise.all([
