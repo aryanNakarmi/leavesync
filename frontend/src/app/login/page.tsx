@@ -28,7 +28,11 @@ function LoginForm() {
     const result = await signIn("credentials", { email, password, redirect: false });
 
     if (result?.error) {
-      setError("Invalid email or password. Please check and try again.");
+      if (result.error === "CredentialsSignin") {
+        setError("The email or password you entered is incorrect. Please try again or create a new account.");
+      } else {
+        setError("Unable to sign in. Please check your connection and try again.");
+      }
       setLoading(false);
     } else {
       // Force full page navigation so the server component re-executes getServerSession()
