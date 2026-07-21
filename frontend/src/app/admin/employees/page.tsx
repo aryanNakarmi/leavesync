@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useRef } from "react";
+import Toast from "@/components/Toast";
 
 interface Employee {
   _id: string;
@@ -209,24 +210,7 @@ export default function EmployeesPage() {
         <p className="text-on-surface-variant mt-1">Manage your team members</p>
       </div>
 
-      {/* Toast */}
-      {toast.show && (
-        <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 border ${
-          toast.type === "success"
-            ? "bg-green-50 border-green-200"
-            : "bg-error-container border-error/20"
-        }`}>
-          <span
-            className={`material-symbols-outlined text-xl shrink-0 ${toast.type === "success" ? "text-green-600" : "text-error"}`}
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            {toast.type === "success" ? "check_circle" : "error"}
-          </span>
-          <p className={`text-sm ${toast.type === "success" ? "text-green-800" : "text-on-error-container"}`}>
-            {toast.message}
-          </p>
-        </div>
-      )}
+      <Toast show={toast.show} type={toast.type} message={toast.message} />
 
       {/* Stats + Search + Add */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">

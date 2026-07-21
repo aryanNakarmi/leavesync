@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { format } from "date-fns";
+import Toast from "@/components/Toast";
 
 interface LeaveRequest {
   _id: string;
@@ -36,7 +37,7 @@ const tabs: { key: FilterTab; label: string }[] = [
 
 // ─── Withdraw Button ─────────────────────────────────────────────────────────
 
-function WithdrawButton({ leaveId, onWithdrawn }: { leaveId: string; onWithdrawn: () => void }) {
+function WithdrawButton({ leaveId, onWithdrawn, onError }: { leaveId: string; onWithdrawn: () => void; onError: (msg: string) => void }) {
   const { data: session } = useSession();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -62,8 +63,13 @@ function WithdrawButton({ leaveId, onWithdrawn }: { leaveId: string; onWithdrawn
       if (res.ok) {
         setConfirmOpen(false);
         onWithdrawn();
+      } else {
+        const data = await res.json();
+        onError(data.error || "Failed to withdraw leave");
       }
-    } catch { /* ignore */ }
+    } catch {
+      onError("Failed to connect. Please try again.");
+    }
     setWithdrawing(false);
   }
 
@@ -130,6 +136,12 @@ export default function StatusPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>({ show: false, type: "success", message: "" });
+
+  function showToast(type: "success" | "error", message: string) {
+    setToast({ show: true, type, message });
+    setTimeout(() => setToast(t => ({ ...t, show: false })), 4000);
+  }
 
   useEffect(() => {
     if (authStatus === "unauthenticated") router.push("/login");
@@ -179,6 +191,8 @@ export default function StatusPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      <Toast show={toast.show} type={toast.type} message={toast.message} />
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-on-surface">Leave Status</h1>
@@ -366,7 +380,7 @@ export default function StatusPage() {
                       {/* Actions */}
                       <td className="px-5 py-4 text-center">
                         {leave.status === "PENDING" && (
-                          <WithdrawButton leaveId={leave._id} onWithdrawn={fetchLeaves} />
+                          <WithdrawButton leaveId={leave._id} onWithdrawn={() => { fetchLeaves(); showToast("success", "Leave request withdrawn"); }} onError={(msg) => showToast("error", msg)} />
                         )}
                       </td>
                     </tr>

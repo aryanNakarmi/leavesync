@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { format, differenceInCalendarDays } from "date-fns";
+import Toast from "@/components/Toast";
 
 interface LeaveType {
   _id: string;
@@ -34,7 +35,7 @@ export default function ApplyLeavePage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [toast, setToast] = useState<{ type: "submitting" | "success"; message: string } | null>(null);
+  const [toast, setToast] = useState<{ type: "submitting" | "success" | "error"; message: string } | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Escape key to close confirmation dialog
@@ -206,30 +207,7 @@ export default function ApplyLeavePage() {
         <p className="text-on-surface-variant mt-1">Submit a new leave request</p>
       </div>
 
-      {/* Toast notification */}
-      {toast && (
-        <div className={`fixed top-6 right-6 z-50 p-4 rounded-xl shadow-xl border flex items-center gap-3 animate-[slideIn_0.3s_ease-out] ${
-          toast.type === "success"
-            ? "bg-green-50 border-green-200"
-            : "bg-blue-50 border-blue-200"
-        }`}>
-          {toast.type === "submitting" ? (
-            <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
-          ) : (
-            <span
-              className="material-symbols-outlined text-xl shrink-0 text-green-600"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              check_circle
-            </span>
-          )}
-          <p className={`text-sm ${
-            toast.type === "success" ? "text-green-800" : "text-blue-800"
-          }`}>
-            {toast.message}
-          </p>
-        </div>
-      )}
+      {toast && <Toast show={true} type={toast.type} message={toast.message} />}
 
       <form onSubmit={handleFormSubmit}>
         <div className="bg-white rounded-lg border border-outline-variant overflow-hidden">

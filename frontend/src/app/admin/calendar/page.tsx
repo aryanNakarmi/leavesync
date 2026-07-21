@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, addMonths, subMonths, isToday } from "date-fns";
+import Toast from "@/components/Toast";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -336,24 +337,7 @@ export default function AdminCalendarPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Toast */}
-      {toast.show && (
-        <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 border ${
-          toast.type === "success"
-            ? "bg-green-50 border-green-200"
-            : "bg-error-container border-error/20"
-        }`}>
-          <span
-            className={`material-symbols-outlined text-xl shrink-0 ${toast.type === "success" ? "text-green-600" : "text-error"}`}
-            style={{ fontVariationSettings: "'FILL' 1" }}
-          >
-            {toast.type === "success" ? "check_circle" : "error"}
-          </span>
-          <p className={`text-sm ${toast.type === "success" ? "text-green-800" : "text-on-error-container"}`}>
-            {toast.message}
-          </p>
-        </div>
-      )}
+      <Toast show={toast.show} type={toast.type} message={toast.message} />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
