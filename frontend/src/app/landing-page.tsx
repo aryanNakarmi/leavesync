@@ -122,11 +122,16 @@ export default function LandingPage() {
                   onClick={() => router.push("/signup")}
                   className="bg-primary text-on-primary font-semibold text-sm px-8 py-4 rounded-xl flex items-center gap-2 hover:opacity-95 transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
                 >
-                  Start Free Trial
+                  Get Started Free
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </button>
-                <button className="bg-secondary-container text-on-secondary-container font-semibold text-sm px-8 py-4 rounded-xl border border-outline-variant hover:bg-surface-container transition-all active:scale-[0.98]">
-                  Book a Demo
+                <button
+                  onClick={() => {
+                    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="bg-secondary-container text-on-secondary-container font-semibold text-sm px-8 py-4 rounded-xl border border-outline-variant hover:bg-surface-container transition-all active:scale-[0.98]"
+                >
+                  Explore Features
                 </button>
               </div>
 
@@ -147,25 +152,92 @@ export default function LandingPage() {
             </div>
 
             <div className="relative">
-              <div className="bg-white rounded-lg border border-outline-variant p-4">
-                <div className="rounded-lg w-full aspect-[4/3] bg-gradient-to-br from-primary-fixed to-surface-container-highest flex items-center justify-center overflow-hidden">
-                  <div className="text-center p-8">
-                    <img src="/logo.png" alt="LeaveSync" className="h-16 w-auto mx-auto mb-4 opacity-50" />
-                    <div className="grid grid-cols-3 gap-3 mt-6">
-                      {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="h-12 rounded-lg bg-white/60 border border-outline-variant/40 flex items-center justify-center">
-                          <span className="material-symbols-outlined text-primary/40 text-lg">
-                            {["calendar_month", "assignment", "group", "bar_chart", "check_circle", "pending_actions"][i - 1]}
-                          </span>
-                        </div>
-                      ))}
+              <div className="bg-white rounded-xl border border-outline-variant shadow-lg overflow-hidden">
+                {/* Calendar Header */}
+                <div className="flex items-center justify-between px-5 py-3.5 bg-surface">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>calendar_month</span>
+                    <span className="text-sm font-bold text-on-surface">July 2026</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-6 h-6 rounded flex items-center justify-center bg-surface-container-low text-on-surface-variant">
+                      <span className="material-symbols-outlined text-sm">chevron_left</span>
                     </div>
+                    <div className="px-2 py-0.5 text-[10px] font-semibold text-primary bg-primary-fixed rounded">Today</div>
+                    <div className="w-6 h-6 rounded flex items-center justify-center bg-surface-container-low text-on-surface-variant">
+                      <span className="material-symbols-outlined text-sm">chevron_right</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calendar Body */}
+                <div className="p-4">
+                  {/* Day headers */}
+                  <div className="grid grid-cols-7 mb-2 gap-1">
+                    {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
+                      <div key={i} className="text-center text-[10px] font-bold text-on-surface-variant uppercase tracking-wider py-1">{d}</div>
+                    ))}
+                  </div>
+
+                  {/* Grid rows */}
+                  {[
+                    ["", "", "", "1", "2", "3", "4"],
+                    ["5", "6", "7", "8", "9", "10", "11"],
+                    ["12", "13", "14", "15", "16", "17", "18"],
+                    ["19", "20", "21", "22", "23", "24", "25"],
+                    ["26", "27", "28", "29", "30", "31", ""],
+                  ].map((week, wi) => (
+                    <div key={wi} className="grid grid-cols-7 gap-1">
+                      {week.map((day, di) => {
+                        const isToday = day === "21";
+                        const hasLeave = day === "14" || day === "15" || day === "16";
+                        const isHoliday = day === "4";
+                        const isWeekend = di === 0 || di === 6;
+                        return (
+                          <div
+                            key={di}
+                            className={`aspect-square rounded-lg flex flex-col items-center justify-center text-xs relative ${
+                              !day ? "invisible" :
+                              isToday ? "bg-primary text-on-primary font-bold shadow-sm" :
+                              hasLeave ? "bg-blue-50 text-blue-700 font-medium" :
+                              isHoliday ? "bg-purple-50 text-purple-700 font-medium" :
+                              isWeekend ? "bg-surface-container-low text-on-surface-variant/40" :
+                              "text-on-surface hover:bg-surface-container-low"
+                            }`}
+                          >
+                            <span className={`${isToday ? "text-[11px]" : "text-[11px]"}`}>{day}</span>
+                            {hasLeave && !isToday && (
+                              <div className="w-1 h-1 rounded-full bg-blue-400 mt-0.5" />
+                            )}
+                            {isHoliday && !isToday && (
+                              <div className="w-1 h-1 rounded-full bg-purple-400 mt-0.5" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Legend */}
+                <div className="px-4 py-2.5 border-t border-outline-variant/50 bg-surface-container-low flex items-center gap-4 text-[10px] text-on-surface-variant">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-400" />
+                    <span>Leave</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-purple-400" />
+                    <span>Holiday</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                    <span>Today</span>
                   </div>
                 </div>
               </div>
 
               {/* Floating Stat Badge */}
-              <div className="absolute -bottom-6 -left-6 bg-primary p-4 rounded-lg text-white flex items-center gap-4">
+              <div className="absolute -bottom-6 -right-6 bg-primary p-4 rounded-lg text-white flex items-center gap-4 shadow-xl">
                 <div className="bg-white/20 p-2 rounded-lg">
                   <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>
                     trending_up
@@ -324,29 +396,10 @@ export default function LandingPage() {
               <img src="/logo.png" alt="LeaveSync" className="h-8 w-auto" />
               <span className="text-lg font-bold text-on-surface">LeaveSync</span>
             </Link>
-            <p className="text-xs text-on-surface-variant">© 2024 LeaveSync. All rights reserved.</p>
+            <p className="text-xs text-on-surface-variant">© 2026 LeaveSync. All rights reserved.</p>
           </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-4 justify-center">
-            {["Privacy Policy", "Terms of Service", "Cookie Policy", "Security"].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="text-xs text-on-surface-variant hover:text-primary transition-all underline underline-offset-2"
-              >
-                {item}
-              </a>
-            ))}
-          </div>
 
-          <div className="flex gap-4">
-            <button className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface transition-all">
-              <span className="material-symbols-outlined text-lg">public</span>
-            </button>
-            <button className="w-10 h-10 rounded-full border border-outline-variant flex items-center justify-center hover:bg-surface transition-all">
-              <span className="material-symbols-outlined text-lg">share</span>
-            </button>
-          </div>
         </div>
       </footer>
     </>
