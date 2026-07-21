@@ -64,3 +64,15 @@ export interface Holiday {
   isRecurringYearly: boolean;
   createdAt: Date;
 }
+
+export interface Notification {
+  _id?: string;
+  userId: string;       // who the notification is FOR
+  type: "LEAVE_SUBMITTED" | "LEAVE_APPROVED" | "LEAVE_REJECTED" | "LEAVE_CANCELLED";
+  title: string;
+  message: string;
+  link: string;         // frontend route to navigate to
+  relatedId: string;    // leave request ID
+  isRead: boolean;
+  createdAt: Date;
+}

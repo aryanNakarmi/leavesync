@@ -31,6 +31,11 @@ export async function getAllUsers() {
   return db.collection("User").find({ role: "EMPLOYEE" }).toArray();
 }
 
+export async function getAllAdmins() {
+  const db = getDB();
+  return db.collection("User").find({ role: "ADMIN" }).toArray();
+}
+
 export async function verifyPassword(plainPassword: string, hashedPassword: string) {
   return bcrypt.compare(plainPassword, hashedPassword);
 }

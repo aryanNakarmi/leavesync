@@ -18,6 +18,13 @@ import {
   updateHolidayHandler,
   deleteHolidayHandler
 } from "../controllers/holiday.controller";
+import {
+  getMyNotifications,
+  getMyUnreadCount,
+  markNotificationRead,
+  markAllNotificationsRead
+} from "../controllers/notification.controller";
+
 const router = Router();
 
 // Auth routes
@@ -49,6 +56,12 @@ router.post("/users", authMiddleware, adminOnly, createEmployee);
 router.patch("/users/:id", authMiddleware, adminOnly, updateEmployee);
 router.delete("/users/:id", authMiddleware, adminOnly, removeEmployee);
 router.patch("/users/:id/leave-balances", authMiddleware, adminOnly, updateEmployeeLeaveBalances);
+
+// Notification routes
+router.get("/notifications", authMiddleware, getMyNotifications);
+router.get("/notifications/unread-count", authMiddleware, getMyUnreadCount);
+router.patch("/notifications/:id/read", authMiddleware, markNotificationRead);
+router.post("/notifications/read-all", authMiddleware, markAllNotificationsRead);
 
 // Holiday routes
 router.get("/holidays", authMiddleware, getHolidaysHandler);
