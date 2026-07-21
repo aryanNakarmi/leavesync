@@ -3,7 +3,18 @@ import { AuthRequest } from "../middleware/auth";
 import { createLeaveRequest, getLeaveRequestsByUser, updateLeaveRequest, getOverlappingLeaves, getLeaveRequestById, getAllLeaveRequests } from "../repositories/leave.repo";
 import { getActiveLeaveTypes } from "../repositories/leaveType.repo";
 import { getLeaveBalance, upsertLeaveBalance } from "../repositories/leaveBalance.repo";
-import { getAllUsers } from "../repositories/user.repo";
+import { getAllUsers, getAllAdmins, getUserById } from "../repositories/user.repo";
+import { createNotification } from "../repositories/notification.repo";
+
+// Simple date formatter for notification messages (avoids needing date-fns in backend)
+function fmtShort(d: Date) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+function fmtFull(d: Date) {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
 
 export async function createLeave(req: AuthRequest, res: Response) {
   const { leaveTypeId, startDate, endDate, reason } = req.body;
@@ -62,6 +73,30 @@ export async function createLeave(req: AuthRequest, res: Response) {
       reason,
       status: "PENDING"
     });
+
+    // Notify all admins about the new leave request
+    try {
+      const user = await getUserById(userId!);
+      const userName = (user as any)?.name || "An employee";
+      const leaveTypes = await getActiveLeaveTypes();
+      const leaveType = leaveTypes.find((t: any) => t._id.toString() === leaveTypeId || t._id === leaveTypeId);
+      const typeName = (leaveType as any)?.name || "Leave";
+
+      const admins = await getAllAdmins();
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin._id.toString(),
+          type: "LEAVE_SUBMITTED",
+          title: "New Leave Request",
+          message: `${userName} submitted a ${typeName} request for ${totalDays} day${totalDays > 1 ? "s" : ""}.`,
+          link: "/admin/leave-requests",
+          relatedId: requestId.toString(),
+          isRead: false
+        });
+      }
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
 
     res.status(201).json({ _id: requestId, status: "PENDING" });
   } catch (error) {
@@ -136,6 +171,29 @@ export async function approveLeave(req: AuthRequest, res: Response) {
       // Continue — the dynamic calculation in getMyLeaveBalance will correct it
     }
 
+    // Notify the employee
+    try {
+      const leaveTypeId = leaveRequest.leaveTypeId;
+      const leaveTypes = await getActiveLeaveTypes();
+      const leaveType = leaveTypes.find((t: any) => t._id.toString() === leaveTypeId || t._id === leaveTypeId);
+      const typeName = (leaveType as any)?.name || "Leave";
+      const startStr = fmtShort(new Date(leaveRequest.startDate));
+      const endStr = fmtFull(new Date(leaveRequest.endDate));
+      const commentSuffix = adminComment ? ` — "${adminComment}"` : "";
+
+      await createNotification({
+        userId: leaveRequest.userId,
+        type: "LEAVE_APPROVED",
+        title: "Leave Approved",
+        message: `Your ${typeName} request (${startStr} → ${endStr}) was approved.${commentSuffix}`,
+        link: "/employee/status",
+        relatedId: id,
+        isRead: false
+      });
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
+
     res.json({ status: "APPROVED" });
   } catch (error) {
     res.status(500).json({ error: "Failed to approve leave" });
@@ -151,6 +209,31 @@ export async function rejectLeave(req: AuthRequest, res: Response) {
       status: "REJECTED",
       adminComment
     });
+
+    // Notify the employee
+    try {
+      const leaveRequest = await getLeaveRequestById(id);
+      if (leaveRequest) {
+        const leaveTypes = await getActiveLeaveTypes();
+        const leaveType = leaveTypes.find((t: any) => t._id.toString() === leaveRequest.leaveTypeId || t._id === leaveRequest.leaveTypeId);
+        const typeName = (leaveType as any)?.name || "Leave";
+        const startStr = fmtShort(new Date(leaveRequest.startDate));
+        const endStr = fmtFull(new Date(leaveRequest.endDate));
+        const commentSuffix = adminComment ? ` — "${adminComment}"` : "";
+
+        await createNotification({
+          userId: leaveRequest.userId,
+          type: "LEAVE_REJECTED",
+          title: "Leave Rejected",
+          message: `Your ${typeName} request (${startStr} → ${endStr}) was rejected.${commentSuffix}`,
+          link: "/employee/status",
+          relatedId: id,
+          isRead: false
+        });
+      }
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
 
     res.json({ status: "REJECTED" });
   } catch (error) {
@@ -182,6 +265,30 @@ export async function cancelLeave(req: AuthRequest, res: Response) {
       status: "REJECTED",
       adminComment: "Cancelled by employee"
     });
+
+    // Notify all admins
+    try {
+      const user = await getUserById(userId!);
+      const userName = (user as any)?.name || "An employee";
+      const leaveTypes = await getActiveLeaveTypes();
+      const leaveType = leaveTypes.find((t: any) => t._id.toString() === leaveRequest.leaveTypeId || t._id === leaveRequest.leaveTypeId);
+      const typeName = (leaveType as any)?.name || "Leave";
+
+      const admins = await getAllAdmins();
+      for (const admin of admins) {
+        await createNotification({
+          userId: admin._id.toString(),
+          type: "LEAVE_CANCELLED",
+          title: "Leave Cancelled",
+          message: `${userName} cancelled their ${typeName} request.`,
+          link: "/admin/leave-requests",
+          relatedId: id,
+          isRead: false
+        });
+      }
+    } catch (notifErr) {
+      console.error("Failed to create notification:", notifErr);
+    }
 
     res.json({ status: "REJECTED" });
   } catch (error) {
