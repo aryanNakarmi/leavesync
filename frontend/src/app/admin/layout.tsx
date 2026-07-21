@@ -13,7 +13,6 @@ const navItems: NavItem[] = [
   { href: "/admin/calendar", label: "Calendar", icon: "calendar_month" },
   { href: "/admin/reports", label: "Reports", icon: "bar_chart" },
   { href: "/admin/settings", label: "Settings", icon: "settings" },
-  { href: "/employee/help", label: "Help", icon: "help" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

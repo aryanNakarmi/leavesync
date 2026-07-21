@@ -54,6 +54,7 @@ export default function EmployeesPage() {
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>(
     { show: false, type: "success", message: "" }
   );
+  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -251,7 +252,7 @@ export default function EmployeesPage() {
           </div>
           <button
             onClick={openAddModal}
-            className="flex items-center gap-2 bg-primary text-on-primary font-medium px-4 py-2.5 rounded-lg text-sm hover:brightness-110 transition-all active:scale-[0.98] whitespace-nowrap"
+            className="flex items-center gap-2 bg-primary text-on-primary font-medium px-4 py-2.5 rounded-lg text-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.97] whitespace-nowrap"
           >
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
             Add Employee
@@ -472,15 +473,27 @@ export default function EmployeesPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-on-surface mb-1.5">Password *</label>
-                    <input
-                      type="password"
-                      value={form.password}
-                      onChange={(e) => updateFormField("password", e.target.value)}
-                      placeholder="At least 6 characters"
-                      required
-                      minLength={6}
-                      className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={(e) => updateFormField("password", e.target.value)}
+                        placeholder="At least 6 characters"
+                        required
+                        minLength={6}
+                        className="w-full px-4 py-2.5 pr-11 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors p-0.5"
+                        tabIndex={-1}
+                      >
+                        <span className="material-symbols-outlined text-lg select-none">
+                          {showPassword ? "visibility_off" : "visibility"}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -561,7 +574,7 @@ export default function EmployeesPage() {
                   Cancel
                 </button>
                 <button type="submit" disabled={actionLoading || !form.name || !form.email || !form.password}
-                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97] flex items-center gap-2"
+                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.97] flex items-center gap-2"
                 >
                   {actionLoading ? (
                     <>

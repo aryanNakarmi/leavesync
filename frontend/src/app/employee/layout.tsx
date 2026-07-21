@@ -12,7 +12,6 @@ const navItems: NavItem[] = [
   { href: "/employee/status", label: "Status", icon: "pending_actions" },
   { href: "/employee/calendar", label: "Calendar", icon: "calendar_month" },
   { href: "/employee/settings", label: "Settings", icon: "settings" },
-  { href: "/employee/help", label: "Help", icon: "help" },
 ];
 
 export default function EmployeeLayout({ children }: { children: React.ReactNode }) {

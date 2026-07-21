@@ -5,64 +5,101 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "primary": "#004ac6",
-        "primary-container": "#2563eb",
-        "primary-fixed": "#dbe1ff",
-        "primary-fixed-dim": "#b4c5ff",
+        // Core brand — deeper, more premium blue
+        "primary": "#1a56db",
+        "primary-container": "#3b82f6",
+        "primary-fixed": "#eef2ff",
+        "primary-fixed-dim": "#c7d2fe",
         "on-primary": "#ffffff",
-        "on-primary-fixed": "#00174b",
-        "on-primary-fixed-variant": "#003ea8",
-        "on-primary-container": "#eeefff",
-        "surface": "#faf8ff",
-        "surface-dim": "#d9d9e5",
-        "surface-container-low": "#f3f3fe",
-        "surface-container": "#ededf9",
-        "surface-container-high": "#e7e7f3",
-        "surface-container-highest": "#e1e2ed",
+        "on-primary-fixed": "#1e3a8a",
+        "on-primary-fixed-variant": "#2563eb",
+        "on-primary-container": "#dbeafe",
+
+        // Surfaces — warmer, more natural feel
+        "surface": "#fafafa",
+        "surface-dim": "#e5e5e5",
+        "surface-container-low": "#f5f5f5",
+        "surface-container": "#eeeeee",
+        "surface-container-high": "#e8e8e8",
+        "surface-container-highest": "#e0e0e0",
         "surface-container-lowest": "#ffffff",
-        "surface-bright": "#faf8ff",
-        "on-surface": "#191b23",
-        "on-surface-variant": "#434655",
-        "background": "#faf8ff",
-        "on-background": "#191b23",
-        "secondary": "#505f76",
-        "secondary-fixed": "#d3e4fe",
-        "secondary-fixed-dim": "#b7c8e1",
+        "surface-bright": "#fafafa",
+        "on-surface": "#171717",
+        "on-surface-variant": "#525252",
+
+        // Background
+        "background": "#fafafa",
+        "on-background": "#171717",
+
+        // Secondary — warm gray for a natural complement
+        "secondary": "#57534e",
+        "secondary-fixed": "#f5f0eb",
+        "secondary-fixed-dim": "#d6d3cc",
         "on-secondary": "#ffffff",
-        "on-secondary-container": "#54647a",
-        "on-secondary-fixed": "#0b1c30",
-        "on-secondary-fixed-variant": "#38485d",
-        "outline": "#737686",
-        "outline-variant": "#c3c6d7",
-        "error": "#ba1a1a",
+        "on-secondary-container": "#57534e",
+        "on-secondary-fixed": "#292524",
+        "on-secondary-fixed-variant": "#44403c",
+
+        // Outline — softer borders
+        "outline": "#a3a3a3",
+        "outline-variant": "#d4d4d4",
+
+        // Error — softer red
+        "error": "#dc2626",
         "on-error": "#ffffff",
-        "error-container": "#ffdad6",
-        "on-error-container": "#93000a",
-        "tertiary": "#943700",
-        "tertiary-container": "#bc4800",
-        "tertiary-fixed": "#ffdbcd",
-        "tertiary-fixed-dim": "#ffb596",
+        "error-container": "#fef2f2",
+        "on-error-container": "#991b1b",
+
+        // Success
+        "success": "#16a34a",
+        "success-container": "#f0fdf4",
+        "on-success": "#ffffff",
+        "on-success-container": "#166534",
+
+        // Warning
+        "warning": "#d97706",
+        "warning-container": "#fffbeb",
+        "on-warning": "#ffffff",
+        "on-warning-container": "#92400e",
+
+        // Tertiary — subtle accent
+        "tertiary": "#0d9488",
+        "tertiary-container": "#14b8a6",
+        "tertiary-fixed": "#f0fdfa",
+        "tertiary-fixed-dim": "#99f6e4",
         "on-tertiary": "#ffffff",
-        "on-tertiary-fixed": "#360f00",
-        "on-tertiary-fixed-variant": "#7d2d00",
-        "on-tertiary-container": "#ffede6",
-        "inverse-surface": "#2e3039",
-        "inverse-primary": "#b4c5ff",
-        "inverse-on-surface": "#f0f0fb",
-        "surface-tint": "#0053db"
+        "on-tertiary-fixed": "#134e4a",
+        "on-tertiary-fixed-variant": "#0f766e",
+        "on-tertiary-container": "#ccfbf1",
+
+        // Inverse
+        "inverse-surface": "#262626",
+        "inverse-primary": "#c7d2fe",
+        "inverse-on-surface": "#fafafa",
+        "surface-tint": "#1a56db",
       },
       fontFamily: {
         sans: ["Inter", ...defaultTheme.fontFamily.sans],
         display: ["Inter", ...defaultTheme.fontFamily.sans],
-        body: ["Inter", ...defaultTheme.fontFamily.sans]
+        body: ["Inter", ...defaultTheme.fontFamily.sans],
       },
       borderRadius: {
-        DEFAULT: "0.25rem",
-        lg: "10px",
+        DEFAULT: "0.375rem",
+        lg: "0.5rem",
         xl: "0.75rem",
-        full: "9999px"
-      }
-    }
+        "2xl": "1rem",
+        full: "9999px",
+      },
+      boxShadow: {
+        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06)',
+        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+        'card-active': '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        'elevated': '0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)',
+      },
+      transitionDuration: {
+        '250': '250ms',
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };

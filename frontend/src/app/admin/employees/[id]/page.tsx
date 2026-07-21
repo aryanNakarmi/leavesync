@@ -78,6 +78,7 @@ export default function EmployeeDetailPage() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Unified edit form state (includes profile fields + password + leave balances)
@@ -333,7 +334,7 @@ export default function EmployeeDetailPage() {
           <h1 className="text-2xl font-bold text-on-surface">{employee.name}</h1>
           {!editing && (
             <button onClick={() => setEditing(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:brightness-110 transition-all active:scale-[0.97]">
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.97]">
               <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>edit</span>
               Edit Profile
             </button>
@@ -427,11 +428,23 @@ export default function EmployeeDetailPage() {
                     New Password
                     <span className="font-normal text-on-surface-variant">(leave blank to keep current)</span>
                   </label>
-                  <input type="password" value={form.password}
-                    onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
-                    placeholder="Leave blank to keep current"
-                    minLength={6}
-                    className="w-full px-3 py-2 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                  <div className="relative">
+                    <input type={showPassword ? "text" : "password"} value={form.password}
+                      onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))}
+                      placeholder="Leave blank to keep current"
+                      minLength={6}
+                      className="w-full px-3 py-2 pr-11 border border-outline-variant rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors p-0.5"
+                      tabIndex={-1}
+                    >
+                      <span className="material-symbols-outlined text-lg select-none">
+                        {showPassword ? "visibility_off" : "visibility"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -522,7 +535,7 @@ export default function EmployeeDetailPage() {
               Cancel
             </button>
             <button type="submit" disabled={saving || !form.name}
-              className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2">
+              className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 transition-all duration-200 flex items-center gap-2">
               {saving ? (
                 <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
               ) : (
@@ -686,7 +699,7 @@ export default function EmployeeDetailPage() {
               <button type="button" onClick={() => setShowDeleteConfirm(false)} disabled={saving}
                 className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Cancel</button>
               <button onClick={handleDeleteEmployee} disabled={saving}
-                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2">
+                className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-error hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 transition-all duration-200 flex items-center gap-2">
                 {saving ? (
                   <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Deleting...</>
                 ) : (

@@ -335,7 +335,7 @@ export default function AdminCalendarPage() {
   // ─── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Toast */}
       {toast.show && (
         <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 border ${
@@ -365,7 +365,7 @@ export default function AdminCalendarPage() {
         </div>
         <button
           onClick={openManageHolidays}
-          className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-lg text-sm font-medium hover:brightness-110 transition-all active:scale-[0.97] shrink-0"
+          className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-lg text-sm font-medium hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.97] shrink-0"
         >
           <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>celebration</span>
           Manage Holidays
@@ -461,9 +461,9 @@ export default function AdminCalendarPage() {
               <button
                 key={idx}
                 onClick={() => setSelectedDay(day)}
-                className={`min-h-[100px] p-2 border-b border-r border-outline-variant/50 text-left transition-colors relative
-                  ${!info.isCurrentMonth ? "bg-surface-container-low/30" : "hover:bg-surface-container-low"}
-                  ${info.isToday ? "bg-primary-fixed/20" : ""}
+                className={`aspect-square p-1.5 border-b border-r border-outline-variant/50 text-left transition-all duration-150 relative
+                  ${!info.isCurrentMonth ? "bg-surface-container-low/20" : "hover:bg-surface-container-low hover:z-10"}
+                  ${info.isToday ? "ring-2 ring-primary/20 ring-inset" : ""}
                 `}
               >
                 {/* Day number */}
@@ -659,7 +659,7 @@ export default function AdminCalendarPage() {
                 <button
                   type="submit"
                   disabled={actionLoading || !holidayForm.name.trim() || !holidayForm.date}
-                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
                 >
                   {actionLoading ? (
                     <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>

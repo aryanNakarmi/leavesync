@@ -182,7 +182,7 @@ export default function SettingsPage() {
             <p className="text-on-surface-variant mt-1 text-sm">Manage leave types available in the system</p>
           </div>
           <button onClick={openAdd}
-            className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-lg text-sm font-medium hover:brightness-110 transition-all active:scale-[0.97] shrink-0">
+            className="flex items-center gap-2 bg-primary text-on-primary px-4 py-2.5 rounded-lg text-sm font-medium hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.97] shrink-0">
             <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
             Add Leave Type
           </button>
@@ -390,7 +390,7 @@ export default function SettingsPage() {
                   Cancel
                 </button>
                 <button type="submit" disabled={saving || !form.name.trim()}
-                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-2">
+                  className="px-5 py-2 rounded-lg text-sm font-medium text-white bg-primary hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 transition-all duration-200 flex items-center gap-2">
                   {saving ? (
                     <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
                   ) : (

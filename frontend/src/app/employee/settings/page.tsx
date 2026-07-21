@@ -21,6 +21,8 @@ export default function EmployeeSettingsPage() {
   // Password form
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [toast, setToast] = useState<{ show: boolean; type: "success" | "error"; message: string }>(
     { show: false, type: "success", message: "" }
@@ -308,7 +310,7 @@ export default function EmployeeSettingsPage() {
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 bg-primary text-on-primary font-medium px-6 py-2.5 rounded-lg text-sm hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97]"
+              className="flex items-center gap-2 bg-primary text-on-primary font-medium px-6 py-2.5 rounded-lg text-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.97]"
             >
               {saving ? (
                 <>
@@ -337,26 +339,50 @@ export default function EmployeeSettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="newPassword" className="block text-sm font-medium text-on-surface mb-1.5">New Password</label>
-              <input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 6 characters"
-                minLength={6}
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm text-on-surface placeholder:text-on-surface-variant/50"
-              />
+              <div className="relative">
+                <input
+                  id="newPassword"
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 6 characters"
+                  minLength={6}
+                  className="w-full px-4 py-2.5 pr-11 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm text-on-surface placeholder:text-on-surface-variant/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors p-0.5"
+                  tabIndex={-1}
+                >
+                  <span className="material-symbols-outlined text-lg select-none">
+                    {showNewPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-on-surface mb-1.5">Confirm New Password</label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Repeat your new password"
-                className="w-full px-4 py-2.5 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm text-on-surface placeholder:text-on-surface-variant/50"
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repeat your new password"
+                  className="w-full px-4 py-2.5 pr-11 bg-surface-container-low border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-sm text-on-surface placeholder:text-on-surface-variant/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors p-0.5"
+                  tabIndex={-1}
+                >
+                  <span className="material-symbols-outlined text-lg select-none">
+                    {showConfirmPassword ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -364,7 +390,7 @@ export default function EmployeeSettingsPage() {
             <button
               type="submit"
               disabled={saving || !newPassword || !confirmPassword}
-              className="flex items-center gap-2 bg-primary text-on-primary font-medium px-6 py-2.5 rounded-lg text-sm hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.97]"
+              className="flex items-center gap-2 bg-primary text-on-primary font-medium px-6 py-2.5 rounded-lg text-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-[0.97]"
             >
               {saving ? (
                 <>

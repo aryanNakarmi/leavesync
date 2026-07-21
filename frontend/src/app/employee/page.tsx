@@ -137,7 +137,7 @@ export default function EmployeeDashboard() {
 
       {/* ─── Quick Stats Row ─── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:border-amber-200 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-amber-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>hourglass_empty</span>
@@ -149,7 +149,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:border-green-200 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-green-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -161,7 +161,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:border-blue-200 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-blue-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>event</span>
@@ -173,7 +173,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:shadow-sm transition-shadow">
+        <div className="bg-white rounded-lg border border-outline-variant p-4 hover:border-purple-200 transition-colors duration-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-purple-600 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>trending_up</span>
@@ -282,7 +282,7 @@ export default function EmployeeDashboard() {
           <button
             key={action.href}
             onClick={() => router.push(action.href)}
-            className="bg-white rounded-lg border border-outline-variant p-5 hover:border-primary-fixed-dim hover:shadow-sm transition-all text-left group"
+            className="bg-white rounded-lg border border-outline-variant p-5 hover:border-primary/20 transition-all duration-200 text-left group"
           >
             <div className={`w-10 h-10 rounded-full ${action.bg} flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
               <span className={`material-symbols-outlined text-lg ${action.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -320,7 +320,7 @@ export default function EmployeeDashboard() {
             <p className="text-sm text-on-surface-variant/70 mt-1">Your leave history will appear here</p>
             <button
               onClick={() => router.push("/employee/apply")}
-              className="mt-4 inline-flex items-center gap-2 bg-primary text-on-primary font-medium px-5 py-2.5 rounded-lg text-sm hover:brightness-110 transition-all active:scale-[0.98]"
+              className="mt-4 inline-flex items-center gap-2 bg-primary text-on-primary font-medium px-5 py-2.5 rounded-lg text-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.97]"
             >
               <span className="material-symbols-outlined text-base">add</span>
               Apply for Leave

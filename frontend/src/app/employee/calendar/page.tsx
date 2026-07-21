@@ -281,7 +281,7 @@ export default function EmployeeCalendarPage() {
             const info = dayInfoMap.get(key);
             if (!info) return null;
 
-            const dayLeaves = info.myLeaves;
+            const dayLeaves = info.myLeaves.filter(l => l.status !== "REJECTED");
             const dayHolidays = info.holidays;
 
             // Determine cell styling based on content
@@ -292,11 +292,9 @@ export default function EmployeeCalendarPage() {
               <button
                 key={idx}
                 onClick={() => setSelectedDay(day)}
-                className={`min-h-[90px] p-2 border-b border-r border-outline-variant/50 text-left transition-colors relative
-                  ${!info.isCurrentMonth ? "bg-surface-container-low/30" : "hover:bg-surface-container-low"}
-                  ${info.isToday ? "bg-primary-fixed/20" : ""}
-                  ${hasLeave && !info.isToday ? "bg-blue-50/40" : ""}
-                  ${hasHoliday && !info.isToday ? "bg-purple-50/30" : ""}
+                className={`aspect-square p-1.5 border-b border-r border-outline-variant/50 text-left transition-all duration-150 relative
+                  ${!info.isCurrentMonth ? "bg-surface-container-low/20" : "hover:bg-surface-container-low hover:z-10"}
+                  ${info.isToday ? "ring-2 ring-primary/20 ring-inset" : ""}
                 `}
               >
                 {/* Day number */}
@@ -426,49 +424,59 @@ function EmployeeDayPopover({
             </div>
           )}
 
-          {/* My leaves */}
-          {dayInfo.myLeaves.length > 0 && (
-            <div>
-              <h4 className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>beach_access</span>
-                My Leave
-              </h4>
-              <div className="space-y-2">
-                {dayInfo.myLeaves.map((l, i) => {
-                  const cfg = statusConfig[l.status] || statusConfig.APPROVED;
-                  return (
-                    <div key={`${l._id}-${i}`} className={`rounded-lg p-3 border ${cfg.bg} ${cfg.border}`}>
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="text-sm font-semibold text-on-surface">{l.leaveTypeName}</p>
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.text} ${cfg.border} border`}>
-                          {cfg.label}
-                        </span>
-                      </div>
-                      <p className="text-xs text-on-surface-variant">
-                        {format(new Date(l.startDate), "MMM d")} → {format(new Date(l.endDate), "MMM d, yyyy")}
-                      </p>
-                      <p className="text-xs text-on-surface-variant mt-1.5 italic">"{l.reason}"</p>
-                      {l.adminComment && (
-                        <div className={`mt-2 pt-2 border-t ${cfg.border} text-xs`}>
-                          <span className={`font-semibold ${cfg.text}`}>Admin: </span>
-                          <span className="text-on-surface-variant">{l.adminComment}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* My leaves — show only APPROVED and PENDING */}
+          {(() => {
+            const activeLeaves = dayInfo.myLeaves.filter(l => l.status !== "REJECTED");
+            const hasAnyContent = dayInfo.holidays.length > 0 || activeLeaves.length > 0;
 
-          {/* Empty state */}
-          {dayInfo.holidays.length === 0 && dayInfo.myLeaves.length === 0 && (
-            <div className="text-center py-8">
-              <span className="material-symbols-outlined text-4xl text-outline mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
-              <p className="text-sm text-on-surface-variant">Nothing on this day</p>
-              <p className="text-xs text-on-surface-variant mt-1">No leave or holidays scheduled.</p>
-            </div>
-          )}
+            if (!hasAnyContent) {
+              return (
+                <div className="text-center py-8">
+                  <span className="material-symbols-outlined text-4xl text-outline mb-2" style={{ fontVariationSettings: "'FILL' 1" }}>event_busy</span>
+                  <p className="text-sm text-on-surface-variant">Nothing on this day</p>
+                  <p className="text-xs text-on-surface-variant mt-1">No leave or holidays scheduled.</p>
+                </div>
+              );
+            }
+
+            return (
+              <>
+                {activeLeaves.length > 0 && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-blue-700 mb-2 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>beach_access</span>
+                      My Leave
+                    </h4>
+                    <div className="space-y-2">
+                      {activeLeaves.map((l, i) => {
+                        const cfg = statusConfig[l.status] || statusConfig.APPROVED;
+                        return (
+                          <div key={`${l._id}-${i}`} className={`rounded-lg p-3 border ${cfg.bg} ${cfg.border}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-semibold text-on-surface">{l.leaveTypeName}</p>
+                              <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${cfg.bg} ${cfg.text} ${cfg.border} border`}>
+                                {cfg.label}
+                              </span>
+                            </div>
+                            <p className="text-xs text-on-surface-variant">
+                              {format(new Date(l.startDate), "MMM d")} → {format(new Date(l.endDate), "MMM d, yyyy")}
+                            </p>
+                            <p className="text-xs text-on-surface-variant mt-1.5 italic">"{l.reason}"</p>
+                            {l.adminComment && (
+                              <div className={`mt-2 pt-2 border-t ${cfg.border} text-xs`}>
+                                <span className={`font-semibold ${cfg.text}`}>Admin: </span>
+                                <span className="text-on-surface-variant">{l.adminComment}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
     </div>
