@@ -15,9 +15,10 @@ interface SidebarProps {
   userName?: string | null;
   userInitials: string;
   profilePicture?: string | null;
+  onEditProfile?: () => void;
 }
 
-export default function Sidebar({ navItems, role, userName, userInitials, profilePicture }: SidebarProps) {
+export default function Sidebar({ navItems, role, userName, userInitials, profilePicture, onEditProfile }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -64,20 +65,31 @@ export default function Sidebar({ navItems, role, userName, userInitials, profil
             <img
               src={profilePicture}
               alt={userName || "User"}
-              className="w-9 h-9 rounded-full object-cover border border-outline-variant"
+              className="w-9 h-9 rounded-full object-cover border border-outline-variant shrink-0"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-sm font-bold">
+            <div className="w-9 h-9 rounded-full bg-primary-fixed flex items-center justify-center text-primary text-sm font-bold shrink-0">
               {userInitials}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-on-surface truncate">{userName}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-sm font-medium text-on-surface truncate">{userName}</p>
+              {onEditProfile && (
+                <button
+                  onClick={onEditProfile}
+                  className="text-on-surface-variant hover:text-primary transition-colors shrink-0"
+                  title="Edit profile"
+                >
+                  <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>edit</span>
+                </button>
+              )}
+            </div>
             <p className="text-[10px] text-on-surface-variant truncate">{role}</p>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-on-surface-variant hover:text-error transition-colors"
+            className="text-on-surface-variant hover:text-error transition-colors shrink-0"
             title="Sign out"
           >
             <span className="material-symbols-outlined text-lg">logout</span>
