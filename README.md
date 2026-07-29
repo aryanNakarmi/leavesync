@@ -1,4 +1,4 @@
-# LeaveSync — Leave Management System
+# LeaveSync: Leave Management System
 
 A full-stack leave management application built with Next.js 14, Express.js, and MongoDB. LeaveSync provides separate portals for admins and employees with a complete leave request lifecycle — from application and approval to reporting and notifications.
 
